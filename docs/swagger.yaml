@@ -1,0 +1,1609 @@
+---
+swagger: "2.0"
+
+################################################################################
+#                              API Information                                 #
+################################################################################
+info:
+  version: 1.0.1
+  title: Modbus webservice Open API
+  description: |
+    ### Restful API for [psmb](https://github.com/taka-wang/psmb)
+  contact:
+    name: Taka Wang
+    email: taka@cmwang.net
+  license:
+    name: MIT
+
+################################################################################
+#                  Host, Base Path, Schemes and Content Types                  #
+################################################################################
+host: 127.0.0.1:8080
+basePath: /api
+schemes:
+  - http
+produces:
+  - application/json
+consumes:
+  - application/json
+
+################################################################################
+#                              Tags                                            #
+################################################################################
+tags:
+  - name: One-off
+    description: One-off requests
+  - name: Poll
+    description: Polling requests
+  - name: Filter
+    description: Filter requests
+  - name: File
+    description: File operations
+
+################################################################################
+#                              Paths                                           #
+################################################################################
+paths:
+### One-off requests
+  /mb/tcp/fc/{fc}:
+    get:
+      tags:
+        - One-off
+      description: |
+        One-off requests - Read coil/register `(mbtcp.once.read)`
+        
+        **Request examples:**
+        
+        - Bits read (FC1, FC2): 
+          `/mb/tcp/1?ip=192.168.3.2&port=503&slave=1&addr=10&len=4`
+
+        - Register read (FC3, FC4) - type 1, 2 (Register Array): 
+          `/mb/tcp/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=10&type=1`
+
+        - Register read (FC3, FC4) - type 3 (scale):
+          `/mb/tcp/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=3&a=0&b=65535&c=100&d=500`
+        
+        - Register read (FC3, FC4) - type 4, 5 (16-bit):
+          `/mb/tcp/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=4&order=1`
+
+        - Register read (FC3, FC4) - type 6, 7, 8 (32-bit):
+          `/mb/tcp/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=6&order=3`
+
+      parameters:
+        - $ref: "#/parameters/readFunctionCode"
+        - $ref: "#/parameters/ip"
+        - $ref: "#/parameters/port"
+        - $ref: "#/parameters/slave"
+        - $ref: "#/parameters/startAddr"
+        - $ref: "#/parameters/length"
+        - $ref: "#/parameters/dataType"
+        - $ref: "#/parameters/endian"
+        - $ref: "#/parameters/scaleDomainLow"
+        - $ref: "#/parameters/scaleDomainHigh"
+        - $ref: "#/parameters/scaleRangeLow"
+        - $ref: "#/parameters/scaleRangeHigh"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          description: Request is ok
+          schema:
+            $ref: "#/definitions/mbtcpRead"
+          examples:
+            Bits read (FC1, FC2):
+              {
+                "status": "ok",
+                "data": [0, 1, 0, 1, 0, 1]
+              }
+            Register read (FC3, FC4) - type 1 (Register Array):
+              {
+                "status": "ok",
+                "type": 1,
+                "bytes": [0XFF, 0X34, 0XAB],
+                "data": [255, 1234, 789]
+              }
+            Register read (FC3, FC4) - type 2 (Hex String):
+              {
+                "status": "ok",
+                "type": 2,
+                "bytes": [0XFF, 0X34, 0XAB],
+                "data": "112C004F12345678"
+              }
+            Register read (FC3, FC4) - type 3 (scale):
+              {
+                "status": "ok",
+                "type": 3,
+                "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
+                "data": [22.34, 33.12, 44.56]
+              }
+            Register read (FC3, FC4) - type 4, 5 (16-bit):
+              {
+                "status": "ok",
+                "type": 4,
+                "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
+                "data": [255, 1234, 789]
+              }
+            Register read (FC3, FC4) - type 6, 7 (UInt32, Int32):
+              {
+                "status": "ok",
+                "type": 6,
+                "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
+                "data": [255, 1234, 789]
+              }
+            Register read (FC3, FC4) - type 8 (Float32):
+              {
+                "status": "ok",
+                "type": 8,
+                "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
+                "data": [22.34, 33.12, 44.56]
+              }
+
+    post:
+      tags:
+        - One-off
+      description: |
+        One-off requests - Write coil/register `(mbtcp.once.write)`
+
+        **Request examples:**
+        
+        - bit write (FC5) - write single bit:
+          
+          ```JSON
+            {
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "data": 1
+            }
+          ```
+        
+        - register write (FC6) - write single register (dec):
+          
+          ```JSON
+            {
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "hex": false,
+              "data": "22"
+            }
+          ```
+        
+        - register write (FC6) - write single register (hex)
+          
+          ```JSON
+            {
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "hex": true,
+              "data": "ABCD"
+            }
+          ```
+        
+        - bits write (FC15) - write multiple bits
+        
+          ```JSON
+            {
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "len": 4,
+              "data": [1,0,1,0]
+            }
+          ```
+
+        - registers write (FC16) - write multiple registers (dec)
+        
+          ```JSON
+            {
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "len": 4,
+              "hex": false,
+              "data": "11,22,33,44"
+            }
+          ```
+
+        - registers write (FC16) - write multiple registers (hex)
+        
+          ```JSON
+            {
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "len": 4,
+              "hex": true,
+              "data": "ABCD1234EFAB1234"
+            }
+          ```
+
+      parameters:
+        - $ref: "#/parameters/writeFunctionCode"
+        - name: mbtcpWrite
+          in: body
+          required: true
+          description: |
+            Data to be written.
+            - **ip**: ip address
+            - port: port number
+            - **slave**: device ID
+            - **addr**: register start address
+            - len: bit/register length
+            - hex: hex/dec string flag `(FC6, 16 only)`
+          schema:
+            $ref: "#/definitions/mbtcpWrite"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        200:
+          $ref: "#/responses/ok"
+
+  /mb/tcp/timeout:
+    get:
+      tags:
+        - One-off
+      description: |
+        One-off requests - Get TCP connection timeout `(mbtcp.timeout.read)`
+        
+        **Request examples:**
+        
+        `/mb/tcp/timeout`
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          description: Request is ok
+          schema:
+            allOf:
+              - $ref: "#/definitions/timeout"
+            required:
+              - status
+            properties:
+              status:
+                type: string
+                description: Response string
+          examples:
+            'application/json': 
+              {
+                "status": "ok", 
+                "timeout": 210000
+              }
+
+    post:
+      tags:
+        - One-off
+      description: |
+        One-off requests - Set TCP connection timeout `(mbtcp.timeout.update)`
+        
+        **Request examples:**
+        
+        ```JSON
+        { "timeout": 210000 }
+        ```
+      parameters:
+        - name: timeout
+          required: true
+          in: body
+          description: Timeout in usec, `range [210000,~)`
+          schema:
+            $ref: "#/definitions/timeout"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/ok"
+
+### Polling requests
+  /mb/tcp/poll/{name}:
+    get:
+      tags:
+        - Poll
+      description: |
+        Polling requests - Read poll request status `(mbtcp.poll.read)`
+        
+        **Request examples:**
+        `/mb/tcp/poll/{name}`
+      parameters:
+        - $ref: "#/parameters/pollName"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          description: Request is ok
+          schema:
+            allOf:
+              - $ref: "#/definitions/mbtcpPollStatus"
+            required:
+              - status
+            properties:
+              status:
+                type: string
+                description: Response string
+          examples:
+            'application/json':
+              {
+                "fc": 1,
+                "ip": "192.168.3.2",
+                "port": "502",
+                "slave": 22,
+                "addr": 250,
+                "len": 10,
+                "interval" : 3,
+                "status": "ok",
+                "enabled": true,
+                "type": 1,
+                "order": 2,
+                "range": {}
+              }
+    
+    post:
+      tags:
+        - Poll
+      description: |
+        Polling requests - Add poll request `(mbtcp.poll.create)`
+        
+        **Request examples:**
+        
+        - Bits read (FC1, FC2):
+          
+          ```JSON
+            {
+              "interval": 3,
+              "enabled": true,
+              "fc" : 1,
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "len": 4
+            }
+          ```
+        
+        - Register read (FC3, FC4) - type 1, 2 (raw):
+          
+          ```JSON
+          {
+            "interval": 3,
+            "enabled": true,
+            "fc" : 3,
+            "ip": "192.168.0.1",
+            "port": "503",
+            "slave": 1,
+            "addr": 10,
+            "len": 4,
+            "type": 1
+          }
+          ```
+        
+        - Register read (FC3, FC4) - type 3 (scale)
+          
+          ```JSON
+          {
+            "interval": 3,
+            "enabled": true,
+            "fc" : 3,
+            "ip": "192.168.0.1",
+            "port": "503",
+            "slave": 1,
+            "addr": 10,
+            "len": 4,
+            "type": 3,
+            "range": 
+            {
+                "a": 0,
+                "b": 65535,
+                "c": 100,
+                "d": 500
+            }
+          }
+          ```
+
+        - Register read (FC3, FC4) - type 4, 5 (16-bit)
+          
+          ```JSON
+          {
+            "interval": 3,
+            "enabled": true,
+            "fc" : 3,
+            "ip": "192.168.0.1",
+            "port": "503",
+            "slave": 1,
+            "addr": 10,
+            "len": 4,
+            "type": 4,
+            "order": 1
+          }
+          ```
+
+        - Register read (FC3, FC4) - type 6, 7, 8 (32-bit)
+          
+          ```JSON
+          {
+            "interval": 3,
+            "enabled": true,
+            "fc" : 3,
+            "ip": "192.168.0.1",
+            "port": "503",
+            "slave": 1,
+            "addr": 10,
+            "len": 4,
+            "type": 6,
+            "order": 3
+          }
+          ```
+      parameters:
+        - $ref: "#/parameters/pollName"
+        - name: mbtcpPollStatus
+          in: body
+          required: true
+          description: |
+            Data to be polled, structure:
+            - **fc**: modbus function code `[1, 2, 3, 4]`
+            - **ip**: ip address
+            - port: port number
+            - **slave**: device ID
+            - **addr**: register start address
+            - len: bit/register length
+            - interval: polling interval in `second`
+            - enabled: Enable flag
+            - type: Data type `(FC 3, 4 only)`
+            - order: Endian `(fc 3, 4 and type 4~8 only)`
+            - range: Scale range object
+              - a: Scale domain low `(type 3 only)`
+              - b: Scale domain high `(type 3 only)`
+              - c: Scale range low `(type 3 only)`
+              - d: Scale range high `(type 3 only)`
+          schema:
+            $ref: "#/definitions/mbtcpPollStatus"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/ok"
+
+    put:
+      tags:
+        - Poll
+      description: |
+        Polling requests - Update poll request interval `(mbtcp.poll.update)`
+        
+        **Request examples:**
+        
+        ```JavaScript
+        {
+            "interval" : 3
+        }
+        ```
+      parameters:
+        - $ref: "#/parameters/pollName"
+        - name: interval
+          required: true
+          in: body
+          description: |
+            Polling interval in `second`
+          schema:
+            $ref: "#/definitions/pollInterval"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/ok"
+          
+    delete:
+      tags:
+        - Poll     
+      description: |
+        Polling requests - Delete poll request `(mbtcp.poll.delete)`
+        
+        **Request example:**
+        `/mb/tcp/poll/{name}`
+      parameters:
+        - $ref: "#/parameters/pollName"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/ok"
+        
+  /mb/tcp/poll/{name}/toggle:
+    post:
+      tags:
+        - Poll
+      description:  |
+        Polling requests - Enable/Disable poll request `(mbtcp.poll.toggle)`
+        
+        **Request examples**
+        
+        ```JavaScript
+        {
+            "enabled" : true
+        }
+        ```
+      parameters:
+        - $ref: "#/parameters/pollName"
+        - $ref: "#/parameters/enabled"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/ok"
+
+  /mb/tcp/poll/{name}/history:
+    get:
+      tags:
+        - Poll
+      description: |
+        Polling requests - Read history `(mbtcp.poll.history)`
+        
+        **Request example**
+        `/mb/tcp/poll/{name}/history`
+      parameters:
+        - $ref: "#/parameters/pollName"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          description: Request is ok
+          schema:
+            allOf:
+              - $ref: "#/definitions/dataHistory"
+            required:
+              - status
+            properties:
+              status:
+                type: string
+                description: Response string
+          examples:
+            'application/json':
+              {
+                "status":"ok",
+                "history":[
+                    {ts: "1.4706441598119247e+18", data: "[0,0,1,1,0,1,0]"},
+                    {ts: "1.4706441598119247e+18", data: "[0,0,1,1,0,1,0]"}
+                ]
+              }
+
+  /mb/tcp/polls:
+    get:
+      tags:
+        - Poll
+      description: |
+        Polling requests - Read all poll requests status `(mbtcp.polls.read)`
+        
+        **Request example:**
+        `/mb/tcp/polls`
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/mbtcpPollsStatus"
+
+    delete:
+      tags:
+        - Poll
+      description: |
+        Polling requests - Delete all poll requests `(mbtcp.polls.delete)`
+        
+        **Request example:**
+        `/mb/tcp/polls`
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/ok"
+
+  /mb/tcp/polls/toggle:
+    post:
+      tags:
+        - Poll
+      description:  |
+        Polling requests - Enable/Disable all poll requests `(mbtcp.polls.toggle)`
+        
+        **Request examples**
+        
+        ```JavaScript
+        {
+            "enabled" : true
+        }
+        ```
+      parameters:
+        - $ref: "#/parameters/enabled"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/ok"
+
+  /mb/tcp/polls/config:
+    get:
+      tags:
+        - Poll
+        - File
+      description: |
+        Polling requests - Export poll requests `(mbtcp.polls.export)`
+        
+        **Request example:**
+        `/mb/tcp/polls/config`
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/mbtcpPollsStatus"
+
+    post:
+      tags:
+        - Poll
+        - File
+      description: |
+        Polling requests - Import poll requests `(mbtcp.polls.import)`
+        
+        **Request example:**
+
+        ```json
+        {
+          "polls": [
+            {
+                "name": "led_1",
+                "fc": 1,
+                "ip": "192.168.3.2",
+                "port": "502",
+                "slave": 22,
+                "addr": 250,
+                "len": 10,
+                "interval" : 3,
+                "enabled": true
+            },
+            {
+                "name": "led_2",
+                "fc": 1,
+                "ip": "192.168.3.2",
+                "port": "502",
+                "slave": 22,
+                "addr": 250,
+                "len": 10,
+                "interval" : 3,
+                "enabled": true
+            }]
+          }
+          ```
+      parameters:
+        - name: mbtcpPollsStatus
+          in: body
+          required: true
+          description: |
+            Import poll requests, structure:
+            
+            **polls**: array of objects
+              - **name**: `Unique` polling request name, example: `LED_12`
+              - **fc**: modbus function code `[1, 2, 3, 4]`
+              - **ip**: ip address
+              - port: port number
+              - **slave**: device ID
+              - **addr**: register start address
+              - len: bit/register length
+              - interval: polling interval in `second`
+              - enabled: Enable flag
+              - type: Data type `(FC 3, 4 only)`
+              - order: Endian `(fc 3, 4 and type 4~8 only)`
+              - range: Scale range object
+                - a: Scale domain low `(type 3 only)`
+                - b: Scale domain high `(type 3 only)`
+                - c: Scale range low `(type 3 only)`
+                - d: Scale range high `(type 3 only)`
+          schema:
+            $ref: "#/definitions/mbtcpPollsStatus"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/ok"
+
+### Filter requests
+  /mb/tcp/filter/{name}:
+    get:
+      tags:
+        - Filter
+      description: |
+        Filter requests - Read filter request status `(mbtcp.filter.read)`
+        
+        **Request example:**
+        `/mb/tcp/filter/{name}`
+      parameters:
+        - $ref: "#/parameters/pollName"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          description: Request is ok
+          schema:
+            allOf:
+              - $ref: "#/definitions/mbtcpFilterStatus"
+            required:
+              - status
+            properties:
+              status:
+                type: string
+                description: Response string
+          examples:
+            'application/json':
+              {
+                "status":"ok",
+                "enabled": true,
+                "type": 6,
+                "arg": [1.0, 2.0]                
+              }
+    post:
+      tags:
+        - Filter
+      description: |
+        Filter requests - Add filter request (mbtcp.filter.create)
+        
+        **Request example:**
+
+        - type 0:
+
+          ```json
+          {
+            "enabled": true,
+            "type": 0
+          }
+          ```
+
+        - type 1, 2, 3, 4, 5:
+
+          ```json
+          {
+            "enabled": true,
+            "type": 1,
+            "arg": [1.0]
+          }
+          ```
+
+        - type 6, 7, 8, 9:
+
+          ```json
+          {
+            "enabled": true,
+            "type": 6,
+            "arg": [1.0, 2.0]
+          }
+          ```
+      parameters:
+        - $ref: "#/parameters/pollName"
+        - $ref: "#/parameters/mbtcpFilterStatus"
+
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        200:
+          $ref: "#/responses/ok"
+
+    put:
+      tags:
+        - Filter
+      description: |
+        Filter requests - Update filter request `(mbtcp.filter.update)`
+        
+        **Request example:**
+
+        - type 0:
+
+          ```json
+          {
+            "enabled": true,
+            "type": 0
+          }
+          ```
+
+        - type 1, 2, 3, 4, 5:
+
+          ```json
+          {
+            "enabled": true,
+            "type": 1,
+            "arg": [1.0]
+          }
+          ```
+
+        - type 6, 7, 8, 9:
+
+          ```json
+          {
+            "enabled": true,
+            "type": 6,
+            "arg": [1.0, 2.0]
+          }
+          ```
+      parameters:
+        - $ref: "#/parameters/pollName"
+        - $ref: "#/parameters/mbtcpFilterStatus"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        200:
+          $ref: "#/responses/ok"
+
+    delete:
+      tags:
+        - Filter
+      description: |
+        Filter requests - Delete filter request `(mbtcp.filter.delete)`
+        
+        **Request example:**
+        `/mb/tcp/filter/{name}`
+      parameters:
+        - $ref: "#/parameters/pollName"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        200:
+          $ref: "#/responses/ok"
+
+  /mb/tcp/filter/{name}/toggle:
+    post:
+      tags:
+        - Filter
+      description:  |
+        Filter requests - Enable/Disable filter request `(mbtcp.filter.toggle)`
+        
+        **Request examples:**
+        
+        ```JavaScript
+        {
+            "enabled" : true
+        }
+        ```
+      parameters:
+        - $ref: "#/parameters/pollName"
+        - $ref: "#/parameters/enabled"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/ok"
+
+  /mb/tcp/filters:
+    get:
+      tags:
+        - Filter
+      description: |
+        Filter requests - Read all filter requests `(mbtcp.filters.read)`
+
+        **Request example:**
+        `/mb/tcp/filters`
+
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/mbtcpFiltersStatus"
+    delete:
+      tags:
+        - Filter
+      description: |
+        Filter requests - Delete all filter requests `(mbtcp.filters.delete)`
+        
+        **Request example:**
+        `/mb/tcp/filters`
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/ok"
+  
+  /mb/tcp/filters/toggle:
+    post:
+      tags:
+        - Filter
+      description:  |
+        Filter requests - Enable/Disable all filter requests `(mbtcp.filters.toggle)`
+        
+        **Request examples:**
+        
+        ```JavaScript
+        {
+            "enabled" : true
+        }
+        ```
+      parameters:
+        - $ref: "#/parameters/enabled"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/ok"
+  
+  /mb/tcp/filters/config:
+    get:
+      tags:
+        - Filter
+        - File
+      description: |
+        Filter requests - Export filter requests `(mbtcp.filters.export)`
+        
+        **Request example:**
+        `/mb/tcp/filters/config`
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/mbtcpFiltersStatus"
+
+    post:
+      tags:
+        - Filter
+        - File
+      description: |
+        Filter requests - Import filter requests `(mbtcp.filters.import)`
+        
+        **Request example:**
+
+        ```json
+        {
+          "filters": [
+            {
+                "name": "led_1",
+                "enabled": true,
+                "type": 6,
+                "arg": [1.0, 2.0]
+            },
+            {
+                "name": "led_2",
+                "enabled": true,
+                "type": 6,
+                "arg": [1.0, 2.0]
+            }
+          ]
+        }
+        ```
+      parameters:
+        - name: mbtcpFiltersStatus
+          in: body
+          required: true
+          description: |
+            Import filter requests, structure:
+            
+            **filters**: array of objects
+              - **name**: `Unique` polling request name, example: `LED_12`
+              - enabled: Enable flag 
+              - type: Equality type
+                - 0: "Change"
+                - 1: "GreaterEqual"
+                - 2: "Greater"
+                - 3: "Equal"
+                - 4: "Less"
+                - 5: "LessEqual"    
+                - 6: "InsideRange", `arg1 < value < arg2`
+                - 7: "InsideIncRange", `arg1 <= value <= arg2`
+                - 8: "OutsideRange", `value < arg1 or value > arg2`
+                - 9: "OutsideIncRange", `value <= arg1 or value >= arg2`
+              - arg: 
+                - one item for type `1, 2, 3, 4, 5`
+                - two items for type `6, 7, 8, 9`
+          schema:
+            $ref: "#/definitions/mbtcpFiltersStatus"
+      responses:
+        default:
+          $ref: "#/responses/fail"
+        '200':
+          $ref: "#/responses/ok"
+
+################################################################################
+#                              Definitions                                     #
+################################################################################
+definitions:
+
+  mbtcp:
+    description: modbus tcp slave information
+    required:
+      - ip
+      - slave
+      - addr
+    properties:
+      ip:
+        description: |
+          Slave IP address, example: `192.168.1.1`
+        type: string
+      port:
+        description: |
+          Slave port number, default: `"502"`
+        type: string
+      slave:
+        description:  |
+          Slave ID (aka slave address, unit number, unit ID). 
+          - Range: `0` ~ `247`
+          - `0` is reserved to `broadcast` exchange
+          - Default: `1`
+          type: string
+          default: "502"
+        type: integer
+        minimum: 0
+        maximum: 247
+        default: 1
+      addr:
+        description:  |
+          Start address of registers
+          - Min: `0`
+          - Max: `9998`
+          - Default: `0`
+        type: integer
+      len:
+        description: |
+          Length of registers (FC15, 16 only)
+          - FC15: max: `1968`
+          - FC16: max: `125`
+        type: integer
+        default: 1
+
+  mbtcpRead:
+    description: modbus tcp read response structure
+    allOf:
+      - $ref: "#/definitions/dataType"
+      - $ref: "#/definitions/status"
+    required:
+      - status
+    properties:
+      data:
+        description: Register or bit 'data array' or 'hexadecimal string'
+      bytes:
+        type: array
+        description: Bytes array
+        items:
+          type: integer
+          format: uint8
+
+  mbtcpWrite:
+    description: modbus tcp write request structure
+    allOf:
+      - $ref: "#/definitions/mbtcp"
+    properties:
+      hex:
+        description: |
+          Hex/Dec string flag `(FC6, 16 only)`
+        type: boolean
+        default: false
+
+
+  mbtcpPollStatus:
+    description: modbus tcp polling request information without name field
+    allOf:
+
+      - $ref: "#/definitions/mbtcp"
+      - $ref: "#/definitions/pollInterval"
+      - $ref: "#/definitions/enabled"
+      - $ref: "#/definitions/dataType"
+      - $ref: "#/definitions/endian"
+    required:
+      - enabled
+      - fc
+    properties:
+      fc:
+        description: |
+          Modbus function code
+          - 1: read coils
+          - 2: read discrete inputs
+          - 3: read holding registers
+          - 4: read input registers
+        type: integer
+        enum:
+        - 1
+        - 2
+        - 3
+        - 4
+      range:
+        description: |
+          Scale range `(fc 3, 4 and type 3 only)`
+            type: object
+        properties:
+          a:
+            description: Scale domain low (fc 3, 4 and type 3 only)
+            type: number
+            format: float
+          b:
+            description: Scale domain high (fc 3, 4 and type 3 only)
+            type: number
+            format: float
+          c:
+            description: Scale range low (fc 3, 4 and type 3 only)
+            type: number
+            format: float
+          d:
+            description: Scale range high (fc 3, 4 and type 3 only)
+            type: number
+            format: float  
+
+  mbtcpPollsStatus:
+    description: modbus tcp polling requests array with name field
+    required:
+      - polls
+    properties:
+      polls:
+        type: array
+        description: an array of poll requests with names
+        items: # extend poll name
+          allOf:
+            - $ref: "#/definitions/mbtcpPollStatus"
+          required:
+            - name
+          properties:
+            name:
+              description: Polling request name
+              type: string
+
+  mbtcpFilterStatus:
+    description: modbus tcp filter request information without name field
+    allOf:
+      - $ref: "#/definitions/enabled"
+      - $ref: "#/definitions/equalityType"
+    required:
+      - enabled
+      - type
+    properties:
+      arg:
+        description: one item for type 1, 2, 3, 4, 5; two items for type 6, 7, 8, 9
+        type: array
+        items:
+          type: number
+          format: float
+
+  mbtcpFiltersStatus:
+    description: modbus tcp filter requests array with name field
+    required:
+      - filters
+    properties:
+      filters:
+        type: array
+        description: an array of filter requests with names
+        items: # extend poll name
+          allOf:
+            - $ref: "#/definitions/mbtcpFilterStatus"
+          required:
+            - name
+          properties:
+            name:
+              description: Polling request name
+              type: string
+
+  timeout:
+    description: modbus tcp connection timeout in usec
+    required:
+      - timeout
+    properties:
+      timeout:
+        type: integer
+        format: int64
+        description: Timeout in usec, range [200000,~)
+        minimum: 200000
+        default: 200000
+
+  enabled:
+    description: Enable flag
+    required:
+      - enabled
+    properties:
+      enabled:
+        description: Enable flag
+        type: boolean
+        default: false
+
+  status:
+    description: status field in response string
+    required:
+      - status
+    properties:
+      status:
+        description: Response string
+        type: string
+        default: "ok"
+
+  dataHistory:
+    description: history array
+    required:
+      - history
+    properties:
+      history:
+        type: array
+        description: history item
+        items:
+          required:
+            - ts
+            - data
+          properties:
+            ts:
+              description: time string
+              type: string
+              format: dateTime
+            data:
+              description: data string
+              type: string
+
+  pollInterval:
+    description: |
+      polling interval in `second`
+    required:
+      - interval
+    properties:
+      interval:
+        description: |
+          polling interval in `second`
+        type: integer
+        minimum: 3
+        default: 3
+
+  dataType:
+    description: |
+      Data type `(FC 3, 4 only)`
+    required:
+      - type
+    properties:
+      type:
+        description: |
+          Data type `(fc 3, 4 only)`
+        type: integer
+        enum:
+        - "*"             # 0
+        - "RegisterArray" # 1
+        - "HexString"     # 2
+        - "Scale"         # 3
+        - "UInt16"        # 4
+        - "Int16"         # 5
+        - "UInt32"        # 6
+        - "Int32"         # 7
+        - "Float32"       # 8
+
+  equalityType:
+    description: Equality type
+    required:
+      - type
+    properties:
+      type:
+        description: Equality type
+        type: integer
+        enum:
+        - "Change"          # 0
+        - "GreaterEqual"    # 1
+        - "Greater"         # 2
+        - "Equal"           # 3
+        - "Less"            # 4
+        - "LessEqual"       # 5
+        - "InsideRange"     # 6
+        - "InsideIncRange"  # 7
+        - "OutsideRange"    # 8
+        - "OutsideIncRange" # 9
+
+  endian:
+    description: |
+      Endian `(fc 3, 4 and type 4~8 only)`
+    required:
+      - order
+    properties:
+      order:
+        description: |
+          Endian `(fc 3, 4 and type 4~8 only)`
+        type: integer
+        enum:
+        - "*"               # 0
+        - "BigEndian"       # 1
+        - "LittleEndian"    # 2
+        - "MidBigEndian"    # 3
+        - "MidLittleEndian" # 4
+
+################################################################################
+#                              Parameters                                      #
+################################################################################
+parameters:
+
+  # path
+  readFunctionCode:
+    name: fc
+    in: path
+    required: true
+    type: integer
+    description: |
+      Modbus function code
+      - 1: read coils
+      - 2: read discrete inputs
+      - 3: read holding registers
+      - 4: read input registers
+    enum:
+    - 1
+    - 2
+    - 3
+    - 4
+
+  writeFunctionCode:
+    name: fc
+    in: path
+    required: true
+    type: integer
+    description: |
+      Modbus function code
+      - 5: write single coil
+      - 6: write single register
+      - 15: write multi coils
+      - 16: write multi registers
+    enum:
+    - 5
+    - 6
+    - 15
+    - 16
+
+  pollName:
+    name: name
+    in: path
+    required: true
+    description: |
+      `Unique` polling request name, example: `LED_12`
+    type: string
+  
+  # body
+  mbtcpFilterStatus:
+    name: mbtcpFilterStatus
+    in: body
+    required: true
+    description: |
+      Filter status
+      - **name**: `Unique` polling request name, example: `LED_12`
+      - enabled: Enable flag 
+      - type: Equality type
+        - 0: "Change"
+        - 1: "GreaterEqual"
+        - 2: "Greater"
+        - 3: "Equal"
+        - 4: "Less"
+        - 5: "LessEqual"    
+        - 6: "InsideRange", `arg1 < value < arg2`
+        - 7: "InsideIncRange", `arg1 <= value <= arg2`
+        - 8: "OutsideRange", `value < arg1 or value > arg2`
+        - 9: "OutsideIncRange", `value <= arg1 or value >= arg2`
+      - arg: 
+        - one item for type `1, 2, 3, 4, 5`
+        - two items for type `6, 7, 8, 9`
+    schema:
+      $ref: "#/definitions/mbtcpFilterStatus"
+
+  enabled:
+    name: enabled
+    required: true
+    in: body
+    description: Enabled flag	
+    schema:
+      $ref: "#/definitions/enabled"
+
+  # query
+  ip:
+    name: ip
+    in: query
+    description: |
+      Slave IP address, example: `192.168.1.1`
+    type: string
+    required: true
+    allowEmptyValue: false
+
+  port:
+    name: port
+    in: query
+    description: |
+      Slave port number, default: `"502"`
+    type: string
+    default: "502"
+    required: true
+    allowEmptyValue: false
+
+  slave:
+    name: slave
+    in: query
+    description: |
+      Slave ID (aka slave address, unit number, unit ID). 
+      - Range: `0` ~ `247`
+      - `0` is reserved to `broadcast` exchange
+      - Default: `1`
+    type: integer
+    format: uint8
+    required: true
+    minimum: 0
+    maximum: 247
+    default: 1
+    allowEmptyValue: false
+
+  startAddr:
+    name: addr
+    in: query
+    description: |
+      Start address of registers
+      - Min: `0`
+      - Max: `9998`
+      - Default: `0`
+    type: integer
+    required: true
+    allowEmptyValue: false
+    minimum: 0
+    maximum: 9998
+    default: 0
+
+  length:
+    name: len
+    in: query
+    description: |
+      Length of registers, default = `1`
+      - FC1: max: `2000`
+      - FC2: max: `2000`
+      - FC3: max: `125`
+      - FC4: max: `125`
+      - FC15: max: `1968`
+      - FC16: max: `125`
+    type: integer
+    default: 1
+
+  dataType:
+    name: type
+    in: query
+    description: |
+      Data type `(fc 3, 4 only)`
+      1. `RegisterArray`: register array
+      2. `HexString`: hex string
+      3. `Scale`: float32 array
+      4. `UInt16`: uint16 array
+      5. `Int16`: int16 array
+      6. `UInt32`: uint32 array
+      7. `Int32`: int32 array
+      8. `Float32`: float32 array
+    type: integer
+    enum:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+
+  endian:
+    name: order
+    in: query
+    description: |
+      Endian `(fc 3, 4 and type 4~8 only)`, default: BigEndian
+      1. BigEndian; `ABCD`
+      2. LittleEndian; `DCBA`
+      3. MidBigEndian; `BADC`
+      4. MidLittleEndian; `CDAB`
+    type: integer
+    format: uint8
+    minimum: 0
+    maximum: 4
+    default: 1
+
+  scaleDomainLow:
+    name: a
+    in: query
+    description: |
+      `Domain low` for linearly scaling `(fc 3, 4 and type 3 only)`
+    type: number
+    format: float
+
+  scaleDomainHigh:
+    name: b
+    in: query
+    description: |
+      `Domain high` for linearly scaling `(fc 3, 4 and type 3 only)`
+    type: number
+    format: float
+
+  scaleRangeLow:
+    name: c
+    in: query
+    description: |
+      `Range low` for linearly scaling `(fc 3, 4 and type 3 only)`
+    type: number
+    format: float
+
+  scaleRangeHigh:
+    name: d
+    in: query
+    description: |
+      `Range high` for linearly scaling `(fc 3, 4 and type 3 only)`
+    type: number
+    format: float
+
+################################################################################
+#                              Responses                                       #
+################################################################################
+responses:
+
+  mbtcpFiltersStatus:
+    description: Request is ok
+    schema:
+      allOf:
+        - $ref: "#/definitions/mbtcpFiltersStatus"
+      required: # extend status field
+        - status
+      properties:
+        status:
+          type: string
+          description: Response string
+    examples:
+      'application/json':
+        {
+          "status": "ok",
+          "filters": [
+              {
+                  "name": "led_1",
+                  "enabled": true,
+                  "type": 6,
+                  "arg": [1.0, 2.0]
+              },
+              {
+                  "name": "led_2",
+                  "enabled": true,
+                  "type": 6,
+                  "arg": [1.0, 2.0]
+              }]
+        }
+
+  mbtcpPollsStatus:
+    description: Request is ok
+    schema:
+      allOf:
+        - $ref: "#/definitions/mbtcpPollsStatus"
+      required: # extend status field
+        - status
+      properties:
+        status:
+          type: string
+          description: Response string
+    examples:
+      'application/json':
+        {
+        "polls": [
+          {
+              "name": "led_1",
+              "fc": 1,
+              "ip": "192.168.3.2",
+              "port": "502",
+              "slave": 22,
+              "addr": 250,
+              "len": 10,
+              "interval" : 3,
+              "enabled": true
+          },
+          {
+              "name": "led_2",
+              "fc": 1,
+              "ip": "192.168.3.2",
+              "port": "502",
+              "slave": 22,
+              "addr": 250,
+              "len": 10,
+              "interval" : 3,
+              "enabled": true
+          }]
+        }
+
+  ok:
+    description: Done, "ok"
+    schema:
+      $ref: "#/definitions/status"
+    examples:
+      'application/json':
+        {
+        "status": "ok"
+        }
+
+  fail:
+    description: Unexpected error, not "ok"
+    schema:
+      $ref: "#/definitions/status"
+    examples:
+      'application/json':
+        {
+         "status": "Fail to complete request!"
+        }

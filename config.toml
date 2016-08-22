@@ -1,0 +1,23 @@
+# TOML config begin
+
+[log]
+debug       = true                      # log level
+json        = false                     # json formatter flag
+to_file     = false                     # log to file flag
+filename    = "/var/log/mb-web.log"     # log file location
+
+[psmbtcp]
+default_port            = "502"         # modbus slave default port
+min_connection_timeout  = 200000        # minimal tcp connection timeout in ms
+min_poll_interval       = 1             # minimal poll interval in second
+max_worker              = 10            # max # worker pool
+max_queue               = 500           # max # task queue
+
+[web]
+prefix                  = "/api/"
+ip                      = ""
+port                    = "8080"
+pub                     = "ipc:///tmp/to.psmb"
+sub                     = "ipc:///tmp/from.psmb"
+
+# TOML config end @20160905

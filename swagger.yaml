@@ -1,0 +1,368 @@
+swagger: "2.0"
+
+info:
+  version: 1.0.0
+  title: mb-web
+  description: A simple restful API for psmb
+
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+host: localhost
+basePath: /api
+
+paths:
+  /mb/tcp/fc/{fc}:
+    get:
+      summary: Read coil/register (mbtcp.once.read)
+      description: |
+        
+        ##### Request examples
+        
+        - Bits read (FC1, FC2): 
+          
+          ```BASH
+          /api/mb/tcp/fc/1?ip=192.168.3.2&port=503&slave=1&addr=10&len=4
+          ```
+          
+          
+        - Register read (FC3, FC4) - type 1, 2 (Register Array): 
+          
+          ```BASH
+          /api/mb/tcp/fc/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=10&type=1
+          ```
+          
+          
+        - Register read (FC3, FC4) - type 3 (scale):
+                  
+          ```BASH
+          /api/mb/tcp/fc/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=3&a=0&b=65535&c=100&d=500
+          ```
+        
+        
+        - Register read (FC3, FC4) - type 4, 5 (16-bit):
+                  
+          ```BASH
+          /api/mb/tcp/fc/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=4&order=1
+          ```
+        
+        
+        - Register read (FC3, FC4) - type 6, 7, 8 (32-bit):
+          
+          ```BASH
+          /api/mb/tcp/fc/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=6&order=3
+          ```
+      parameters:
+        - name: fc
+          in: path
+          required: true
+          description: Function code
+          type: integer
+          minimum: 1
+          maximum: 4
+        - name: ip
+          in: query
+          description: Slave IP address
+          type: string
+          required: true
+        - name: port
+          in: query
+          description: Slave port
+          type: string
+          default: "502"
+          required: true
+        - name: slave
+          in: query
+          description: Device ID
+          type: integer
+          required: true
+          minimum: 0
+          maximum: 247
+        - name: addr
+          in: query
+          description: Start address of registers
+          type: integer
+          required: true
+        - name: len
+          in: query
+          description: Length of registers
+          type: integer
+          default: 1
+        - name: type
+          in: query
+          description: Data type (fc 3, 4 only)
+          type: integer
+          minimum: 0
+          maximum: 8
+          default: 0
+        - name: order
+          in: query
+          description: Endian	(fc 3, 4 and type 4~8 only)
+          type: integer
+          minimum: 0
+          maximum: 4
+          default: 0
+        - name: a
+          in: query
+          description: Scale range - domain low (fc 3, 4 and type 3 only)
+          type: number
+        - name: b
+          in: query
+          description: Scale range - domain high (fc 3, 4 and type 3 only)
+          type: number
+        - name: c
+          in: query
+          description: Scale range - range low (fc 3, 4 and type 3 only)
+          type: number
+        - name: d
+          in: query
+          description: Scale range - range high (fc 3, 4 and type 3 only)
+          type: number
+      responses:
+        '200':
+          description: Request is ok
+          schema:
+            $ref: "#/definitions/resp:mbtcp.once.read"
+          examples:
+            Bits read (FC1, FC2):
+              {
+                "status": "ok",
+                "data": [0,1,0,1,0,1]
+              }
+            Register read (FC3, FC4) - type 1 (Register Array):
+              {
+                "status": "ok",
+                "type": 1,
+                "bytes": [0XFF, 0X34, 0XAB],
+                "data": [255, 1234, 789]
+              }
+            Register read (FC3, FC4) - type 2 (Hex String):
+              {
+                "status": "ok",
+                "type": 2,
+                "bytes": [0XFF, 0X34, 0XAB],
+                "data": "112C004F12345678"
+              }
+            Register read (FC3, FC4) - type 3 (scale):
+              {
+                "status": "ok",
+                "type": 3,
+                "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
+                "data": [22.34, 33.12, 44.56]
+              }
+            Register read (FC3, FC4) - type 4, 5 (16-bit):
+              {
+                "status": "ok",
+                "type": 4,
+                "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
+                "data": [255, 1234, 789]
+              }
+            Register read (FC3, FC4) - type 6, 7 (UInt32, Int32):
+              {
+                "status": "ok",
+                "type": 6,
+                "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
+                "data": [255, 1234, 789]
+              }
+            Register read (FC3, FC4) - type 8 (Float32):
+              {
+                "status": "ok",
+                "type": 8,
+                "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
+                "data": [22.34, 33.12, 44.56]
+              }
+        default:
+          description: Bad request
+          schema:
+            $ref: "#/definitions/resp"
+          examples:
+            'application/json':
+              {
+                "status": "Fail"
+              }
+    post:
+      summary: Write coil/register (mbtcp.once.write)
+      description: |
+
+        ##### Request examples
+        
+        - bit write (FC5) - write single bit:
+          
+          ```JSON
+            {
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "data": 1
+            }
+          ```
+        
+        - register write (FC6) - write single register (dec):
+          
+          ```JSON
+            {
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "hex": false,
+              "data": "22"
+            }
+          ```
+        
+        - register write (FC6) - write single register (hex)
+          
+          ```JSON
+            {
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "hex": true,
+              "data": "ABCD"
+            }
+          ```
+        
+        - bits write (FC15) - write multiple bits
+        
+          ```JSON
+            {
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "len": 4,
+              "data": [1,0,1,0]
+            }
+          ```
+
+        - registers write (FC16) - write multiple registers (dec)
+        
+          ```JSON
+            {
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "len": 4,
+              "hex": false,
+              "data": "11,22,33,44"
+            }
+          ```
+
+        - registers write (FC16) - write multiple registers (hex)
+        
+          ```JSON
+            {
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "len": 4,
+              "hex": true,
+              "data": "ABCD1234EFAB1234"
+            }
+          ```
+      parameters:
+        - name: fc
+          in: path
+          required: true
+          description: Function code
+          type: integer
+          enum: [1,2,3,4]
+        - name: body
+          in: body
+          required: true
+          description: Data to be written.
+          schema:
+            $ref: "#/definitions/req:mbtcp.once.read"
+      responses:
+        default:
+          description: Bad request
+          schema:
+            $ref: "#/definitions/resp"
+          examples:
+            'application/json': |-
+              {
+                "status": "Fail to complete request!"
+              }
+        200:
+          description: Request is ok
+          schema:
+            $ref: "#/definitions/resp"
+          examples:
+            'application/json':
+              {
+                "status": "ok"
+              }
+
+
+definitions:
+
+  req:mbtcp.once.read:
+    required:
+      - ip
+      - slave
+      - addr
+    properties:
+      ip:
+        description: Slave IP address
+        type: string
+      port:
+        description: Slave port
+        type: string
+        default: "502"
+      slave:
+        description: Device ID
+        type: integer
+        minimum: 0
+        maximum: 247
+      addr:
+        description: Start address of registers
+        type: integer
+      len:
+        description: Length of registers (FC15, 16 only)
+        type: integer
+        default: 1
+      hex:
+        description: Hex/Dec string flag (FC6, 16 only)
+        type: boolean
+        default: false
+      data:
+        description: integer for FC5, string for FC6, 16, and bit array for fc15
+  resp:mbtcp.once.read:
+    required:
+      - status
+    properties:
+      status:
+        type: string
+        description: Response string
+      data:
+        description: Register or bit data array or hexadecimal string
+      bytes:
+        type: array
+        description: Bytes array
+        items:
+          type: integer
+          format: int8
+      type:
+        type: integer
+        description: Data type
+  resp:
+    required:
+      - status
+    properties:
+      status:
+        type: string
+        description: Response string
+
+#responses:
+#  SimpleFailResponse:
+#    description: Request failed.
+#    schema:
+#      $ref: "#/definitions/Error"
+      

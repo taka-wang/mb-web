@@ -45,21 +45,21 @@
 
 ### 1.1 Read coil/register (**mbtcp.once.read**)
 
->|params |description            |In            |type          |range     |example     |required                                 |
->|:------|:----------------------|:-------------|:-------------|:---------|:-----------|:----------------------------------------|
->|fc     |function code          |path          |integer       |[1,4]     |1           |:heavy_check_mark:                       |
->|ip     |ip address             |query         |string        |-         |127.0.0.1   |:heavy_check_mark:                       |
->|port   |port number            |query         |string        |[1,65535] |502         |default: 502                             |
->|slave  |slave id               |query         |integer       |[1, 253]  |1           |:heavy_check_mark:                       |
->|addr   |register start address |query         |integer       |-         |23          |:heavy_check_mark:                       |
->|len    |register length        |query         |integer       |-         |20          |default: 1                               |
->|type   |Data type              |query         | [1,8]        | see below|            |default: 1, **fc 3, 4 only**             |
->|order  |Endian                 |query         | [1,4]        | see below|            |default: 1, **fc 3, 4 and type 4~8 only**|
->|range  |Scale range            |query         | -            | see below|            |fc 3, 4 and type 3 only                  |
->|status |response status        |response body |string        |-         |"ok"        |:heavy_check_mark:                       |
->|data   |response value         |response body |integer array |          |[1,0,24,1]  |if success                               |
+>|params |description            |In            |type          |range        |example     |required                                 |
+>|:------|:----------------------|:-------------|:-------------|:------------|:-----------|:----------------------------------------|
+>|fc     |function code          |path          |integer       |[1,4]        |1           |:heavy_check_mark:                       |
+>|ip     |ip address             |query         |string        |-            |127.0.0.1   |:heavy_check_mark:                       |
+>|port   |port number            |query         |string        |[1,65535]    |502         |default: 502                             |
+>|slave  |slave id               |query         |integer       |[1, 253]     |1           |:heavy_check_mark:                       |
+>|addr   |register start address |query         |integer       |-            |23          |:heavy_check_mark:                       |
+>|len    |register length        |query         |integer       |-            |20          |default: 1                               |
+>|type   |Data type              |query         |integer       |[1,8]        | see below  |default: 1, **fc 3, 4 only**             |
+>|order  |Endian                 |query         |integer       |[1,4]        | see below  |default: 1, **fc 3, 4 and type 4~8 only**|
+>|range  |Scale range            |query         |number        |-            | see below  |fc 3, 4 and type 3 only                  |
+>|bytes  |response byte array    |response body |-             |[0XAB, 0X12] | see below  |fc 3, 4 and type 2~8 only                |
+>|status |response status        |response body |string        |-            |"ok"        |:heavy_check_mark:                       |
+>|data   |response value         |response body |integer array |-            |[1,0,24,1]  |if success                               |
 
-**Be careful**
 
 - Verb: **GET**
 - URI: /api/mb/tcp/fc/**{fc}**

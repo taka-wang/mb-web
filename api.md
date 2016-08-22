@@ -45,65 +45,176 @@
 
 ### 1.1 Read coil/register (**mbtcp.once.read**)
 
-|params |description            |In            |type          |range     |example     |required          |
-|:------|:----------------------|:-------------|:-------------|:---------|:-----------|:-----------------|
-|fc     |function code          |path          |integer       |[1,4]     |1           |:heavy_check_mark:|
-|ip     |ip address             |query         |string        |-         |127.0.0.1   |:heavy_check_mark:|
-|port   |port number            |query         |string        |[1,65535] |502         | default: 502     |
-|slave  |slave id               |query         |integer       |[1, 253]  |1           |:heavy_check_mark:|
-|addr   |register start address |query         |integer       |-         |23          |:heavy_check_mark:|
-|len    |register length        |query         |integer       |-         |20          |default: 1        |
-|status |response status        |response body |string        |-         |"ok"        |:heavy_check_mark:|
-|data   |response value         |response body |integer array |          |[1,0,24,1]  |if success        |
+>|params |description            |In            |type          |range     |example     |required                                 |
+>|:------|:----------------------|:-------------|:-------------|:---------|:-----------|:----------------------------------------|
+>|fc     |function code          |path          |integer       |[1,4]     |1           |:heavy_check_mark:                       |
+>|ip     |ip address             |query         |string        |-         |127.0.0.1   |:heavy_check_mark:                       |
+>|port   |port number            |query         |string        |[1,65535] |502         |default: 502                             |
+>|slave  |slave id               |query         |integer       |[1, 253]  |1           |:heavy_check_mark:                       |
+>|addr   |register start address |query         |integer       |-         |23          |:heavy_check_mark:                       |
+>|len    |register length        |query         |integer       |-         |20          |default: 1                               |
+>|type   |Data type              |query         | [1,8]        | see below|            |default: 1, **fc 3, 4 only**             |
+>|order  |Endian                 |query         | [1,4]        | see below|            |default: 1, **fc 3, 4 and type 4~8 only**|
+>|range  |Scale range            |query         | -            | see below|            |fc 3, 4 and type 3 only                  |
+>|status |response status        |response body |string        |-         |"ok"        |:heavy_check_mark:                       |
+>|data   |response value         |response body |integer array |          |[1,0,24,1]  |if success                               |
+
+**Be careful**
 
 - Verb: **GET**
 - URI: /api/mb/tcp/fc/**{fc}**
-- Query: ?ip=**{ip}**&port=**{port}**&slave=**{slave}**&addr=**{addr}**&len=**{len}**
-- Example: read single coil/register
-
-    - **Request**
+- Query: ?ip=**{ip}**&port=**{port}**&slave=**{slave}**&addr=**{addr}**&len=**{len}**&type=**{type}**
+- Example: Bits read (FC1, FC2)
+    - Request
         - port: 502
         - len: 1
         - endpoint:
         ```Bash
-        /api/mb/tcp/fc/1?ip=192.168.3.2&slave=1&addr=10
+        /api/mb/tcp/fc/1?ip=192.168.3.2&port=503&slave=1&addr=10&len=4
         ```
 
-    - **Response**
-        - success:
+    - Response
+        - Success
         ```JavaScript
         {
             "status": "ok",
-            "data": [1]
+            "data": [0,1,0,1,0,1]
         }
         ```
 
-        - fail:
+        - Fail
         ```JavaScript
         {
             "status": "timeout"
         }
         ```
-- Examples: read multiple coils/registers
 
-    - **Request**
+- Examples: Register read (FC3, FC4) - type 1, 2 (raw)
+    - Request
         - endpoint:
+
         ```Bash
-        /api/mb/tcp/fc/2?ip=192.168.3.2&port=503&slave=1&addr=10&len=10
+        /api/mb/tcp/fc/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=10&type=1
         ```
 
-    - **Response**
-        - success:
+    - Response
+        - Success - type 1 (RegisterArray):
         ```JavaScript
         {
             "status": "ok",
-            "data": [1, 0, 1, 0, 0, 0, 0, 0, 1, 0]
+            "type": 1,
+            "bytes": [0XFF, 0X34, 0XAB],
+            "data": [255, 1234, 789]
         }
         ```
 
-        - fail:
+        - Success - type 2 (Hex String):
         ```JavaScript
         {
+            "status": "ok",
+            "type": 2,
+            "bytes": [0XFF, 0X34, 0XAB],
+            "data": "112C004F12345678"
+        }
+        ```
+
+        - Fail:
+        ```JavaScript
+        {
+            "type": 2,
+            "status": "timeout"
+        }
+        ```
+
+- Examples: Register read (FC3, FC4) - type 3 (scale)
+    - Request
+        - endpoint:
+
+        ```Bash
+        /api/mb/tcp/fc/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=3&a=0&b=65535&c=100&d=500
+        ```
+
+    - Response
+        - Success:
+        ```JavaScript
+        {
+            "status": "ok",
+            "type": 3,
+            "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
+            "data": [22.34, 33.12, 44.56]
+        }
+        ```
+
+        - Fail:
+        ```JavaScript
+        {
+            "type": 3,
+            "bytes": null,
+            "status": "timeout"
+        }
+        ```
+
+- Examples: Register read (FC3, FC4) - type 4, 5 (16-bit)
+    - Request
+        - endpoint:
+
+        ```Bash
+        /api/mb/tcp/fc/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=4&order=1
+        ```
+
+    - Response
+        - Success:
+        ```JavaScript
+        {
+            "status": "ok",
+            "type": 4,
+            "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
+            "data": [255, 1234, 789]
+        }
+        ```
+
+        - Fail:
+        ```JavaScript
+        {
+            "type": 4,
+            "bytes": null,
+            "status": "timeout"
+        }
+        ```
+
+- Examples: Register read (FC3, FC4) - type 6, 7, 8 (32-bit)
+    - Request
+        - endpoint:
+
+        ```Bash
+        /api/mb/tcp/fc/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=6&order=3
+        ```
+    - Response
+        - Success - type 6, 7 (UInt32, Int32):
+        ```JavaScript
+        {
+            "status": "ok",
+            "type": 6,
+            "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
+            "data": [255, 1234, 789]
+        }
+        ```
+
+        - Success - type 8 (Float32):
+        ```JavaScript
+        {
+            "status": "ok",
+            "type": 8,
+            "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
+            "data": [22.34, 33.12, 44.56]
+        }
+        ```
+
+        - Fail:
+        ```JavaScript
+        {
+            "type": 8,
+            "bytes": null,
             "status": "timeout"
         }
         ```

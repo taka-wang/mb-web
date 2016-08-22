@@ -193,6 +193,8 @@
         }
         ```
 
+---
+
 ### 1.3 Get TCP connection timeout (**mbtcp.timeout.read**)
 
 |params |description            |In            |type          |range     |example     |required          |
@@ -225,6 +227,7 @@
             "status": "timeout"
         }
         ```
+---
 
 ### 1.4 Set TCP connection timeout (**mbtcp.timeout.update**)
 
@@ -320,6 +323,8 @@
         }
         ```
 
+---
+
 ### 2.2 Update poll request interval (**mbtcp.poll.update**)
 
 |params       |description            |In            |type          |range                  |example     |required          |
@@ -360,6 +365,7 @@
             "status": "timeout"
         }
         ```
+---
 
 ### 2.3 Read poll request status (**mbtcp.poll.read**)
 
@@ -408,6 +414,7 @@
             "status": "not exist"
         }
         ```
+---
 
 ### 2.4 Delete poll request (**mbtcp.poll.delete**)
 
@@ -441,6 +448,7 @@
             "status": "timeout"
         }
         ```
+---
 
 ### 2.5 Enable/Disable poll request (**mbtcp.poll.toggle**)
 
@@ -481,7 +489,8 @@
             "status": "timeout"
         }
         ```
- 
+---
+
 ### 2.6 Read all poll requests status (**mbtcp.polls.read**)
 
 |params       |description            |In            |type          |range                  |example     |required          |
@@ -547,6 +556,7 @@
                 "status": "timeout"
             }
             ```
+---
 
 ### 2.7 Delete all poll requests (**mbtcp.polls.delete**)
 
@@ -577,6 +587,7 @@
             "status": "timeout"
         }
         ```
+---
 
 ### 2.8 Enable/Disable all poll requests (**mbtcp.polls.toggle**)
 
@@ -615,6 +626,7 @@
             "status": "timeout"
         }
         ```
+---
 
 ### 2.9 Import poll requests (**mbtcp.polls.import**)
 
@@ -690,6 +702,7 @@
         }
         ```
 
+---
 
 ### 2.10 Export poll requests (**mbtcp.polls.export**)
 
@@ -759,6 +772,8 @@
         }
         ```
 
+---
+
 ### 2.11 Read history (**mbtcp.poll.history**)
 
 |params   |description            |In            |type          |range                  |example     |required          |
@@ -816,50 +831,70 @@
 - Verb: **POST**
 - URI: /api/mb/tcp/filter/**{name}**
 
+---
+
 ### 3.2 Update filter request (**mbtcp.filter.update**)
 
 - Verb: **PUT**
 - URI: /api/mb/tcp/filter/**{name}**
+
+---
 
 ### 3.3 Read filter request status (**mbtcp.filter.read**)
 
 - Verb: **GET**
 - URI: /api/mb/tcp/filter/**{name}**
 
+---
+
 ### 3.4 Delete filter request (**mbtcp.filter.delete**)
 
 - Verb: **DELETE**
 - URI: /api/mb/tcp/filter/**{name}**
+
+---
 
 ### 3.5 Enable/Disable filter request (**mbtcp.filter.toggle**)
 
 - Verb: **POST**
 - URI: /api/mb/tcp/filter/**{name}**/toggle
 
+---
+
 ### 3.6 Read all filter requests (**mbtcp.filters.read**)
 
 - Verb: **GET**
 - URI: /api/mb/tcp/filters
+
+---
 
 ### 3.7 Delete all filter requests (**mbtcp.filters.delete**)
 
 - Verb: **DELETE**
 - URI: /api/mb/tcp/filters
 
+---
+
 ### 3.8 Enable/Disable all filter requests (**mbtcp.filters.toggle**)
 
 - Verb: **POST**
 - URI: /api/mb/tcp/filters/toggle
+
+---
 
 ### 3.9 Import filter requests (**mbtcp.filters.import**)
 
 - Verb: **POST**
 - URI: /api/mb/tcp/filters/import
 
+---
+
 ### 3.10 Export filter requests (**mbtcp.filters.export**)
 
 - Verb: **GET**
 - URI: /api/mb/tcp/filters/export
+
+---
 
 ## 4. Authentication
 
@@ -870,15 +905,25 @@
 
 **TODO**
 
+---
+
 ### 4.2 Logout
 
 - Verb: **GET**
 - URI: /api/auth/logout
 
+---
+
 ### 4.3 Update username
 
+---
+
 ### 4.4 Update password
+
+---
 
 ### 4.5 Reset authetication setting
 
 **TODO**
+
+---

@@ -3,7 +3,9 @@ swagger: "2.0"
 info:
   version: 1.0.0
   title: mb-web
-  description: A simple restful API for psmb
+  description: |-
+  
+    ### Restful API for [psmb](https://github.com/taka-wang/psmb)
 
 schemes:
   - http
@@ -17,7 +19,7 @@ basePath: /api
 paths:
   /mb/tcp/fc/{fc}:
     get:
-      summary: Read coil/register (mbtcp.once.read)
+      summary: One-off requests - Read coil/register (mbtcp.once.read)
       description: |
         
         ##### Request examples
@@ -59,8 +61,9 @@ paths:
         - name: fc
           in: path
           required: true
-          description: Function code
+          description: Modbus function code
           type: integer
+          format: uint8
           minimum: 1
           maximum: 4
         - name: ip
@@ -68,24 +71,30 @@ paths:
           description: Slave IP address
           type: string
           required: true
+          allowEmptyValue: false
         - name: port
           in: query
           description: Slave port
           type: string
           default: "502"
           required: true
+          allowEmptyValue: false
         - name: slave
           in: query
           description: Device ID
           type: integer
+          format: uint8
           required: true
           minimum: 0
           maximum: 247
+          default: 1
+          allowEmptyValue: false
         - name: addr
           in: query
           description: Start address of registers
           type: integer
           required: true
+          allowEmptyValue: false
         - name: len
           in: query
           description: Length of registers
@@ -95,32 +104,38 @@ paths:
           in: query
           description: Data type (fc 3, 4 only)
           type: integer
+          format: uint8
           minimum: 0
           maximum: 8
-          default: 0
+          default: 1
         - name: order
           in: query
-          description: Endian	(fc 3, 4 and type 4~8 only)
+          description: Endian (fc 3, 4 and type 4~8 only)
           type: integer
+          format: uint8
           minimum: 0
           maximum: 4
-          default: 0
+          default: 1
         - name: a
           in: query
-          description: Scale range - domain low (fc 3, 4 and type 3 only)
+          description: Scale domain low (fc 3, 4 and type 3 only)
           type: number
+          format: float
         - name: b
           in: query
-          description: Scale range - domain high (fc 3, 4 and type 3 only)
+          description: Scale domain high (fc 3, 4 and type 3 only)
           type: number
+          format: float
         - name: c
           in: query
-          description: Scale range - range low (fc 3, 4 and type 3 only)
+          description: Scale range low (fc 3, 4 and type 3 only)
           type: number
+          format: float
         - name: d
           in: query
-          description: Scale range - range high (fc 3, 4 and type 3 only)
+          description: Scale range high (fc 3, 4 and type 3 only)
           type: number
+          format: float
       responses:
         '200':
           description: Request is ok
@@ -130,7 +145,7 @@ paths:
             Bits read (FC1, FC2):
               {
                 "status": "ok",
-                "data": [0,1,0,1,0,1]
+                "data": [0, 1, 0, 1, 0, 1]
               }
             Register read (FC3, FC4) - type 1 (Register Array):
               {
@@ -179,12 +194,12 @@ paths:
           schema:
             $ref: "#/definitions/resp"
           examples:
-            'application/json':
+            'application/json': 
               {
-                "status": "Fail"
+                "status": "Fail to complete request!"
               }
     post:
-      summary: Write coil/register (mbtcp.once.write)
+      summary: One-off requests - Write coil/register (mbtcp.once.write)
       description: |
 
         ##### Request examples
@@ -271,9 +286,9 @@ paths:
         - name: fc
           in: path
           required: true
-          description: Function code
+          description: Modbus function code
           type: integer
-          enum: [1,2,3,4]
+          enum: [1, 2, 3, 4]
         - name: body
           in: body
           required: true
@@ -286,7 +301,7 @@ paths:
           schema:
             $ref: "#/definitions/resp"
           examples:
-            'application/json': |-
+            'application/json': 
               {
                 "status": "Fail to complete request!"
               }
@@ -299,7 +314,87 @@ paths:
               {
                 "status": "ok"
               }
-
+  /mb/tcp/timeout:
+    get:
+      summary: One-off requests - Get TCP connection timeout (mbtcp.timeout.read)
+      description: |
+        Get modbus TCP connection timeout
+        
+        ```bash
+        /api/mb/tcp/timeout
+        ```
+      responses:
+        default:
+          description: Bad request
+          schema:
+            $ref: "#/definitions/resp"
+          examples:
+            'application/json': 
+              {
+                "status": "Fail to complete request!"
+              }
+        '200':
+          description: Request is ok
+          schema:
+            required:
+              - status
+              - timeout
+            properties:
+              status:
+                type: string
+                description: Response string
+              timeout:
+                type: integer
+                format: int64
+                description: Timeout in usec, range [200000,~)
+                minimum: 200000
+                default: 200000
+          examples:
+            'application/json': 
+              {
+                "status": "ok", 
+                "timeout": 210000
+              }
+    post:
+      summary: One-off requests - Set TCP connection timeout (mbtcp.timeout.update)
+      description: |
+        ##### Request examples
+        
+        ```JSON
+        { "timeout": 210000 }
+        ```
+      parameters:
+        - name: timeout
+          in: body
+          description: Timeout in usec, range [200000,~)
+          schema:
+            required:
+              - timeout
+            properties:
+              timeout:
+                type: integer
+                format: int64
+                minimum: 200000
+                default: 200000
+      responses:
+        default:
+          description: Bad request
+          schema:
+            $ref: "#/definitions/resp"
+          examples:
+            'application/json': 
+              {
+                "status": "Fail to complete request!"
+              }
+        '200':
+          description: Request is ok
+          schema:
+            $ref: "#/definitions/resp"
+          examples:
+            'application/json':
+              {
+                "status": "ok"
+              }
 
 definitions:
 
@@ -342,15 +437,16 @@ definitions:
         type: string
         description: Response string
       data:
-        description: Register or bit data array or hexadecimal string
+        description: Register or bit 'data array' or 'hexadecimal string'
       bytes:
         type: array
         description: Bytes array
         items:
           type: integer
-          format: int8
+          format: uint8
       type:
         type: integer
+        format: uint8
         description: Data type
   resp:
     required:

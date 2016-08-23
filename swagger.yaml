@@ -58,85 +58,21 @@ paths:
           /api/mb/tcp/fc/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=6&order=3
           ```
       parameters:
-        - name: fc
-          in: path
-          required: true
-          description: Modbus function code
-          type: integer
-          format: uint8
-          minimum: 1
-          maximum: 4
-        - name: ip
-          in: query
-          description: Slave IP address
-          type: string
-          required: true
-          allowEmptyValue: false
-        - name: port
-          in: query
-          description: Slave port
-          type: string
-          default: "502"
-          required: true
-          allowEmptyValue: false
-        - name: slave
-          in: query
-          description: Device ID
-          type: integer
-          format: uint8
-          required: true
-          minimum: 0
-          maximum: 247
-          default: 1
-          allowEmptyValue: false
-        - name: addr
-          in: query
-          description: Start address of registers
-          type: integer
-          required: true
-          allowEmptyValue: false
-        - name: len
-          in: query
-          description: Length of registers
-          type: integer
-          default: 1
-        - name: type
-          in: query
-          description: Data type (fc 3, 4 only)
-          type: integer
-          format: uint8
-          minimum: 0
-          maximum: 8
-          default: 1
-        - name: order
-          in: query
-          description: Endian (fc 3, 4 and type 4~8 only)
-          type: integer
-          format: uint8
-          minimum: 0
-          maximum: 4
-          default: 1
-        - name: a
-          in: query
-          description: Scale domain low (fc 3, 4 and type 3 only)
-          type: number
-          format: float
-        - name: b
-          in: query
-          description: Scale domain high (fc 3, 4 and type 3 only)
-          type: number
-          format: float
-        - name: c
-          in: query
-          description: Scale range low (fc 3, 4 and type 3 only)
-          type: number
-          format: float
-        - name: d
-          in: query
-          description: Scale range high (fc 3, 4 and type 3 only)
-          type: number
-          format: float
+        - $ref: "#/parameters/readFunctionCode"
+        - $ref: "#/parameters/ip"
+        - $ref: "#/parameters/port"
+        - $ref: "#/parameters/slave"
+        - $ref: "#/parameters/startAddr"
+        - $ref: "#/parameters/length"
+        - $ref: "#/parameters/dataType"
+        - $ref: "#/parameters/endian"
+        - $ref: "#/parameters/scaleDomainLow"
+        - $ref: "#/parameters/scaleDomainHigh"
+        - $ref: "#/parameters/scaleRangeLow"
+        - $ref: "#/parameters/scaleRangeHigh"
       responses:
+        default:
+          $ref: "#/responses/simpleFail"
         '200':
           description: Request is ok
           schema:
@@ -189,15 +125,7 @@ paths:
                 "bytes": [0XAB, 0X12, 0XCD, 0XED, 0X12, 0X34],
                 "data": [22.34, 33.12, 44.56]
               }
-        default:
-          description: Bad request
-          schema:
-            $ref: "#/definitions/resp"
-          examples:
-            'application/json': 
-              {
-                "status": "Fail to complete request!"
-              }
+
     post:
       summary: One-off requests - Write coil/register (mbtcp.once.write)
       description: |
@@ -283,37 +211,19 @@ paths:
             }
           ```
       parameters:
-        - name: fc
-          in: path
-          required: true
-          description: Modbus function code
-          type: integer
-          enum: [1, 2, 3, 4]
+        - $ref: "#/parameters/writeFunctionCode"
         - name: body
           in: body
           required: true
           description: Data to be written.
           schema:
-            $ref: "#/definitions/req:mbtcp.once.read"
+            $ref: "#/definitions/req:mbtcp.once.write"
       responses:
         default:
-          description: Bad request
-          schema:
-            $ref: "#/definitions/resp"
-          examples:
-            'application/json': 
-              {
-                "status": "Fail to complete request!"
-              }
+          $ref: "#/responses/simpleFail"
         200:
-          description: Request is ok
-          schema:
-            $ref: "#/definitions/resp"
-          examples:
-            'application/json':
-              {
-                "status": "ok"
-              }
+          $ref: "#/responses/simpleOK"
+
   /mb/tcp/timeout:
     get:
       summary: One-off requests - Get TCP connection timeout (mbtcp.timeout.read)
@@ -325,14 +235,7 @@ paths:
         ```
       responses:
         default:
-          description: Bad request
-          schema:
-            $ref: "#/definitions/resp"
-          examples:
-            'application/json': 
-              {
-                "status": "Fail to complete request!"
-              }
+          $ref: "#/responses/simpleFail"
         '200':
           description: Request is ok
           schema:
@@ -355,6 +258,7 @@ paths:
                 "status": "ok", 
                 "timeout": 210000
               }
+    
     post:
       summary: One-off requests - Set TCP connection timeout (mbtcp.timeout.update)
       description: |
@@ -365,6 +269,7 @@ paths:
         ```
       parameters:
         - name: timeout
+          required: true
           in: body
           description: Timeout in usec, range [200000,~)
           schema:
@@ -378,27 +283,157 @@ paths:
                 default: 200000
       responses:
         default:
-          description: Bad request
-          schema:
-            $ref: "#/definitions/resp"
-          examples:
-            'application/json': 
-              {
-                "status": "Fail to complete request!"
-              }
+          $ref: "#/responses/simpleFail"
         '200':
-          description: Request is ok
+          $ref: "#/responses/simpleOK"
+
+  /mb/tcp/poll/{name}:
+    post:
+      summary: Polling requests - Add poll request (mbtcp.poll.create)
+      description: |
+
+        ##### Request examples
+        
+        - Bits read (FC1, FC2):
+          
+          ```JSON
+            {
+              "interval": 3,
+              "enabled": true,
+              "fc" : 1,
+              "ip": "192.168.0.1",
+              "port": "503",
+              "slave": 1,
+              "addr": 10,
+              "len": 4
+            }
+          ```
+        
+        - Register read (FC3, FC4) - type 1, 2 (raw):
+          
+          ```JSON
+          {
+            "interval": 3,
+            "enabled": true,
+            "fc" : 3,
+            "ip": "192.168.0.1",
+            "port": "503",
+            "slave": 1,
+            "addr": 10,
+            "len": 4,
+            "type": 1
+          }
+          ```
+        
+        - Register read (FC3, FC4) - type 3 (scale)
+          
+          ```JSON
+          {
+            "interval": 3,
+            "enabled": true,
+            "fc" : 3,
+            "ip": "192.168.0.1",
+            "port": "503",
+            "slave": 1,
+            "addr": 10,
+            "len": 4,
+            "type": 3,
+            "range": 
+            {
+                "a": 0,
+                "b": 65535,
+                "c": 100,
+                "d": 500
+            }
+          }
+          ```
+
+        - Register read (FC3, FC4) - type 4, 5 (16-bit)
+          
+          ```JSON
+          {
+            "interval": 3,
+            "enabled": true,
+            "fc" : 3,
+            "ip": "192.168.0.1",
+            "port": "503",
+            "slave": 1,
+            "addr": 10,
+            "len": 4,
+            "type": 4,
+            "order": 1
+          }
+          ```
+
+        - Register read (FC3, FC4) - type 6, 7, 8 (32-bit)
+          
+          ```JSON
+          {
+            "name": "led_1",
+            "interval": 3,
+            "enabled": true,
+            "fc" : 3,
+            "ip": "192.168.0.1",
+            "port": "503",
+            "slave": 1,
+            "addr": 10,
+            "len": 4,
+            "type": 6,
+            "order": 3
+          }
+          ```
+      parameters:
+        - $ref: "#/parameters/pollName"
+        - name: body
+          in: body
+          required: true
+          description: Data to be polled.
           schema:
-            $ref: "#/definitions/resp"
-          examples:
-            'application/json':
-              {
-                "status": "ok"
-              }
+            $ref: "#/definitions/req:mbtcp.poll.create"
+      responses:
+        default:
+          $ref: "#/responses/simpleFail"
+        '200':
+          $ref: "#/responses/simpleOK"
+
+    put:
+      summary: Polling requests - Update poll request interval (mbtcp.poll.update)
+      description: |
+
+        ##### Request examples
+        
+        ```JavaScript
+        {
+            "interval" : 3
+        }
+        ```
+
+      parameters:
+        - $ref: "#/parameters/pollName"
+        - name: interval
+          required: true
+          in: body
+          description: Polling interval in sec
+          schema:
+            required:
+              - timeout
+            properties:
+              timeout:
+                type: integer
+                minimum: 3
+                default: 3
+      responses:
+        default:
+          $ref: "#/responses/simpleFail"
+        '200':
+          $ref: "#/responses/simpleOK"
+
+
+##----------------------------------
 
 definitions:
 
-  req:mbtcp.once.read:
+  mbtcp: # post
     required:
       - ip
       - slave
@@ -416,6 +451,7 @@ definitions:
         type: integer
         minimum: 0
         maximum: 247
+        default: 1
       addr:
         description: Start address of registers
         type: integer
@@ -423,19 +459,73 @@ definitions:
         description: Length of registers (FC15, 16 only)
         type: integer
         default: 1
+
+  req:mbtcp.once.write: # post
+    allOf:
+      - $ref: "#/definitions/mbtcp"
+    properties:
       hex:
         description: Hex/Dec string flag (FC6, 16 only)
         type: boolean
         default: false
-      data:
-        description: integer for FC5, string for FC6, 16, and bit array for fc15
+
+  req:mbtcp.poll.create: # post
+    allOf:
+      - $ref: "#/definitions/mbtcp"
+    required:
+      - interval
+      - enabled
+    properties:
+      interval:
+        description: polling interval in sec
+        type: integer
+        minimum: 1
+        default: 1
+      enabled:
+        description: polling enabled flag
+        type: boolean
+        default: false
+      type:
+        description: Data type (fc 3, 4 only)
+        type: integer
+        format: uint8
+        minimum: 0
+        maximum: 8
+        default: 1
+      order:
+        description: Endian (fc 3, 4 and type 4~8 only)
+        type: integer
+        format: uint8
+        minimum: 0
+        maximum: 4
+        default: 1
+      range:
+        description: Scale range (fc 3, 4 and type 3 only)
+        type: object
+        properties:
+          a:
+            description: Scale domain low (fc 3, 4 and type 3 only)
+            type: number
+            format: float
+          b:
+            description: Scale domain high (fc 3, 4 and type 3 only)
+            type: number
+            format: float
+          c:
+            description: Scale range low (fc 3, 4 and type 3 only)
+            type: number
+            format: float
+          d:
+            description: Scale range high (fc 3, 4 and type 3 only)
+            type: number
+            format: float  
+
   resp:mbtcp.once.read:
+    allOf:
+      - $ref: "#/definitions/resp"
     required:
       - status
     properties:
-      status:
-        type: string
-        description: Response string
       data:
         description: Register or bit 'data array' or 'hexadecimal string'
       bytes:
@@ -448,6 +538,7 @@ definitions:
         type: integer
         format: uint8
         description: Data type
+
   resp:
     required:
       - status
@@ -456,9 +547,130 @@ definitions:
         type: string
         description: Response string
 
-#responses:
-#  SimpleFailResponse:
-#    description: Request failed.
-#    schema:
-#      $ref: "#/definitions/Error"
-      
+parameters:
+  # path
+  readFunctionCode:
+    name: fc
+    in: path
+    required: true
+    description: Modbus function code
+    type: integer
+    enum: [1, 2, 3, 4]
+  writeFunctionCode:
+    name: fc
+    in: path
+    required: true
+    description: Modbus function code
+    type: integer
+    enum: [5, 6, 15, 16]
+  pollName:
+    name: name
+    in: path
+    required: true
+    description: Polling request name
+    type: string
+
+  # query
+  ip:
+    name: ip
+    in: query
+    description: Slave IP address
+    type: string
+    required: true
+    allowEmptyValue: false
+  port:
+    name: port
+    in: query
+    description: Slave port
+    type: string
+    default: "502"
+    required: true
+    allowEmptyValue: false
+  slave:
+    name: slave
+    in: query
+    description: Device ID
+    type: integer
+    format: uint8
+    required: true
+    minimum: 0
+    maximum: 247
+    default: 1
+    allowEmptyValue: false
+  startAddr:
+    name: addr
+    in: query
+    description: Start address of registers
+    type: integer
+    required: true
+    allowEmptyValue: false
+  length:
+    name: len
+    in: query
+    description: Length of registers
+    type: integer
+    default: 1
+  dataType:
+    name: type
+    in: query
+    description: Data type (fc 3, 4 only)
+    type: integer
+    format: uint8
+    minimum: 0
+    maximum: 8
+    default: 1
+  endian:
+    name: order
+    in: query
+    description: Endian (fc 3, 4 and type 4~8 only)
+    type: integer
+    format: uint8
+    minimum: 0
+    maximum: 4
+    default: 1
+  scaleDomainLow:
+    name: a
+    in: query
+    description: Scale domain low (fc 3, 4 and type 3 only)
+    type: number
+    format: float
+  scaleDomainHigh:
+    name: b
+    in: query
+    description: Scale domain high (fc 3, 4 and type 3 only)
+    type: number
+    format: float
+  scaleRangeLow:
+    name: c
+    in: query
+    description: Scale range low (fc 3, 4 and type 3 only)
+    type: number
+    format: float
+  scaleRangeHigh:
+    name: d
+    in: query
+    description: Scale range high (fc 3, 4 and type 3 only)
+    type: number
+    format: float
+
+responses:
+
+  simpleOK:
+    description: Request is ok
+    schema:
+      $ref: "#/definitions/resp"
+    examples:
+      'application/json':
+        {
+        "status": "ok"
+        }
+
+  simpleFail:
+    description: Bad request
+    schema:
+      $ref: "#/definitions/resp"
+    examples:
+      'application/json':
+        {
+         "status": "Fail to complete request!"
+        }

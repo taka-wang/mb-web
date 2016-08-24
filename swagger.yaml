@@ -29,35 +29,35 @@ paths:
         
         - Bits read (FC1, FC2): 
           
-          ```BASH
+          ```bash
           /api/mb/tcp/1?ip=192.168.3.2&port=503&slave=1&addr=10&len=4
           ```
           
           
         - Register read (FC3, FC4) - type 1, 2 (Register Array): 
           
-          ```BASH
+          ```bash
           /api/mb/tcp/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=10&type=1
           ```
           
           
         - Register read (FC3, FC4) - type 3 (scale):
                   
-          ```BASH
+          ```bash
           /api/mb/tcp/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=3&a=0&b=65535&c=100&d=500
           ```
         
         
         - Register read (FC3, FC4) - type 4, 5 (16-bit):
                   
-          ```BASH
+          ```bash
           /api/mb/tcp/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=4&order=1
           ```
         
         
         - Register read (FC3, FC4) - type 6, 7, 8 (32-bit):
           
-          ```BASH
+          ```bash
           /api/mb/tcp/3?ip=192.168.3.2&port=503&slave=1&addr=10&len=4&type=6&order=3
           ```
       parameters:
@@ -75,7 +75,7 @@ paths:
         - $ref: "#/parameters/scaleRangeHigh"
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
           description: Request is ok
           schema:
@@ -213,9 +213,10 @@ paths:
               "data": "ABCD1234EFAB1234"
             }
           ```
+
       parameters:
         - $ref: "#/parameters/writeFunctionCode"
-        - name: body
+        - name: mbtcpWrite
           in: body
           required: true
           description: Data to be written.
@@ -223,48 +224,30 @@ paths:
             $ref: "#/definitions/mbtcpWrite"
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         200:
-          $ref: "#/responses/simpleOK"
+          $ref: "#/responses/ok"
 
   /mb/tcp/timeout:
     get:
       summary: One-off requests - Get TCP connection timeout (mbtcp.timeout.read)
       description: |
-        Get modbus TCP connection timeout
+
+        ##### Get modbus TCP connection timeout
         
         ```bash
         /api/mb/tcp/timeout
         ```
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
-          description: Request is ok
-          schema:
-            required:
-              - status
-              - timeout
-            properties:
-              status:
-                type: string
-                description: Response string
-              timeout:
-                type: integer
-                format: int64
-                description: Timeout in usec, range [200000,~)
-                minimum: 200000
-                default: 200000
-          examples:
-            'application/json': 
-              {
-                "status": "ok", 
-                "timeout": 210000
-              }
-    
+          $ref: "#/responses/mbtcpTimeout"
+
     post:
       summary: One-off requests - Set TCP connection timeout (mbtcp.timeout.update)
       description: |
+
         ##### Request examples
         
         ```JSON
@@ -274,21 +257,14 @@ paths:
         - name: timeout
           required: true
           in: body
-          description: Timeout in usec, range [200000,~)
+          description: Timeout in usec, range [210000,~)
           schema:
-            required:
-              - timeout
-            properties:
-              timeout:
-                type: integer
-                format: int64
-                minimum: 200000
-                default: 200000
+            $ref: "#/definitions/timeout"
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
-          $ref: "#/responses/simpleOK"
+          $ref: "#/responses/ok"
 
   /mb/tcp/poll/{name}:
     get:
@@ -298,7 +274,7 @@ paths:
         - $ref: "#/parameters/pollName"
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
           description: Request is ok
           schema:
@@ -423,7 +399,7 @@ paths:
           ```
       parameters:
         - $ref: "#/parameters/pollName"
-        - name: body
+        - name: mbtcpPollStatus
           in: body
           required: true
           description: Data to be polled.
@@ -431,9 +407,9 @@ paths:
             $ref: "#/definitions/mbtcpPollStatus"
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
-          $ref: "#/responses/simpleOK"
+          $ref: "#/responses/ok"
 
     put:
       summary: Polling requests - Update poll request interval (mbtcp.poll.update)
@@ -446,7 +422,6 @@ paths:
             "interval" : 3
         }
         ```
-
       parameters:
         - $ref: "#/parameters/pollName"
         - name: interval
@@ -454,29 +429,23 @@ paths:
           in: body
           description: Polling interval in sec
           schema:
-            required:
-              - timeout
-            properties:
-              timeout:
-                type: integer
-                minimum: 3
-                default: 3
+            $ref: "#/definitions/pollInterval"
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
-          $ref: "#/responses/simpleOK"
+          $ref: "#/responses/ok"
           
     delete:      
       summary: Polling requests - Delete poll request (mbtcp.poll.delete)
-      #description: Delete poll request
+      description: Delete specific poll request by name
       parameters:
         - $ref: "#/parameters/pollName"
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
-          $ref: "#/responses/simpleOK"
+          $ref: "#/responses/ok"
         
   /mb/tcp/poll/{name}/toggle:
     post:
@@ -500,9 +469,9 @@ paths:
             $ref: "#/definitions/enabled"
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
-          $ref: "#/responses/simpleOK"
+          $ref: "#/responses/ok"
 
   /mb/tcp/polls:
     get:
@@ -510,18 +479,18 @@ paths:
       description: Read all poll requests status
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
           $ref: "#/responses/mbtcpPollsStatus"
 
     delete:
       summary: Polling requests - Delete all poll requests (mbtcp.polls.delete)
-      #description: Delete all poll requests
+      description: Delete all poll requests
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
-          $ref: "#/responses/simpleOK"
+          $ref: "#/responses/ok"
 
   /mb/tcp/polls/toggle:
     post:
@@ -544,23 +513,23 @@ paths:
             $ref: "#/definitions/enabled"
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
-          $ref: "#/responses/simpleOK"
+          $ref: "#/responses/ok"
 
   /mb/tcp/polls/config:
     get:
       summary: Polling requests - Export poll requests (mbtcp.polls.export)
-      #description: Export poll requests
+      description: Export poll requests
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
           $ref: "#/responses/mbtcpPollsStatus"
 
     post:
       summary: Polling requests - Import poll requests (mbtcp.polls.import)
-      #description: Import poll requests
+      description: Import poll requests
       parameters:
         - name: body
           in: body
@@ -570,9 +539,9 @@ paths:
             $ref: "#/definitions/mbtcpPollsStatus"
       responses:
         default:
-          $ref: "#/responses/simpleFail"
+          $ref: "#/responses/fail"
         '200':
-          $ref: "#/responses/simpleOK"
+          $ref: "#/responses/ok"
 
 
 #
@@ -581,6 +550,7 @@ paths:
 definitions:
 
   mbtcp:
+    description: modbus tcp slave information
     required:
       - ip
       - slave
@@ -608,6 +578,7 @@ definitions:
         default: 1
 
   mbtcpRead:
+    description: modbus tcp read response structure
     required:
       - status
     properties:
@@ -628,6 +599,7 @@ definitions:
           description: Response string
 
   mbtcpWrite:
+    description: modbus tcp write request structure
     allOf:
       - $ref: "#/definitions/mbtcp"
     properties:
@@ -637,21 +609,14 @@ definitions:
         default: false
 
   mbtcpPollStatus:
+    description: modbus tcp polling request information without name field
     allOf:
       - $ref: "#/definitions/mbtcp"
+      - $ref: "#/definitions/pollInterval"
+      - $ref: "#/definitions/enabled"
     required:
-      - interval
       - enabled
     properties:
-      interval:
-        description: polling interval in sec
-        type: integer
-        minimum: 1
-        default: 1
-      enabled:
-        description: polling enabled flag
-        type: boolean
-        default: false
       type:
         description: Data type (fc 3, 4 only)
         type: integer
@@ -687,15 +652,15 @@ definitions:
             type: number
             format: float  
 
-
   mbtcpPollsStatus:
+    description: modbus tcp polling requests array with name field
     required:
       - polls
     properties:
       polls:
         type: array
-        description: an array of poll requests
-        items:
+        description: an array of poll requests with names
+        items: # extend poll name
           allOf:
             - $ref: "#/definitions/mbtcpPollStatus"
           required:
@@ -705,22 +670,48 @@ definitions:
               description: Polling request name
               type: string
 
+  timeout:
+    description: modbus tcp connection timeout in usec
+    required:
+      - timeout
+    properties:
+      timeout:
+        type: integer
+        format: int64
+        description: Timeout in usec, range [200000,~)
+        minimum: 200000
+        default: 200000
+
   enabled:
+    description: Enable flag
     required:
       - enabled
     properties:
       enabled:
-        description: Enabled flag
+        description: Enable flag
         type: boolean
         default: false
 
   status:
+    description: status field in response string
     required:
       - status
     properties:
       status:
-        type: string
         description: Response string
+        type: string
+        default: "ok"
+
+  pollInterval:
+    description: polling interval in second
+    required:
+      - interval
+    properties:
+      interval:
+        description: polling interval in second
+        type: integer
+        minimum: 3
+        default: 3
 
 #
 # ----- parameters
@@ -788,6 +779,9 @@ parameters:
     type: integer
     required: true
     allowEmptyValue: false
+    minimum: 0
+    maximum: 9998
+    default: 0
 
   length:
     name: len
@@ -849,12 +843,30 @@ parameters:
 #
 responses:
 
+  mbtcpTimeout:
+    description: Request is ok
+    schema:
+      allOf:
+        - $ref: "#/definitions/timeout"
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: Response string
+    examples:
+      'application/json': 
+        {
+          "status": "ok", 
+          "timeout": 210000
+        }
+
   mbtcpPollsStatus:
     description: Request is ok
     schema:
       allOf:
         - $ref: "#/definitions/mbtcpPollsStatus"
-      required:
+      required: # extend status field
         - status
       properties:
         status:
@@ -888,8 +900,8 @@ responses:
           }]
         }
 
-  simpleOK:
-    description: Request is ok
+  ok:
+    description: Simple response for success request
     schema:
       $ref: "#/definitions/status"
     examples:
@@ -898,8 +910,8 @@ responses:
         "status": "ok"
         }
 
-  simpleFail:
-    description: Bad request
+  fail:
+    description: Simple response for bad request
     schema:
       $ref: "#/definitions/status"
     examples:

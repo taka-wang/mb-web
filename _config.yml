@@ -1,0 +1,7 @@
+# Site settings
+title: api
+baseurl: "/mb-web" # the subpath of your site, e.g. /blog/
+url: "http://taka-wang.github.io/mb-web/" # the base hostname & protocol for your site
+
+# Build settings
+markdown: kramdown

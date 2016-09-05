@@ -1,0 +1,28 @@
+machine:
+    #timezone:
+    #    Asia/Taipei
+    services:
+        - docker
+
+dependencies:
+    override:
+        - sudo apt-get install python-dev && sudo pip install --upgrade docker-compose==1.8.0
+
+test:
+    pre:
+        - docker version
+        - docker-compose version
+        #- docker build --no-cache=true -t conf -f conf/Dockerfile.x86 .
+        #- docker build --no-cache=true -t worker -f worker/Dockerfile.x86 .
+        #- docker build --no-cache=true -t test    -f test/Dockerfile.x86 .
+    override:
+        #- docker run -it conf
+        #- docker run -it worker
+        #- docker run -it test
+        #----------------------CI------------------------------------
+        #- docker-compose -f test/docker-compose.x86 rm -f -a
+        - docker-compose -f test/docker-compose.x86 build
+        - docker-compose -f test/docker-compose.x86 up --abort-on-container-exit
+        - cat /var/tmp/success      # test
+        #- rm -f /var/tmp/success   # drone only
+    #post:

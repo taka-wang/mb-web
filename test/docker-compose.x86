@@ -1,0 +1,36 @@
+redis:
+    image: takawang/redis:x86
+    ports:
+        - "6379"
+
+mongodb:
+    image: mongo:3.2
+    ports:
+        - "27017"
+slave:
+    image: edgepro/c-modbus-slave:x86
+
+modbusd:
+    image: edgepro/modbusd:x86
+    volumes:
+        - /tmp:/tmp
+    links:
+        - slave
+
+psmbtcpsrv:
+    image: edgepro/psmb-srv:x86
+    volumes_from:
+        - modbusd
+    links:
+        - redis
+        - mongodb
+
+mbweb:
+    build: .
+    dockerfile: Dockerfile.x86
+    volumes_from:
+        - modbusd
+    links:
+        - slave
+    volumes:
+        - /var/tmp:/var/tmp # mount for test

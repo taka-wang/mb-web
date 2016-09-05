@@ -24,3 +24,5 @@ _testmain.go
 *.prof
 .vscode/
 mb-web
+glide.lock
+vendor/

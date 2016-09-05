@@ -238,6 +238,7 @@ paths:
             - **addr**: register start address
             - len: bit/register length
             - hex: hex/dec string flag `(FC6, 16 only)`
+            - data: data to be written
           schema:
             $ref: "#/definitions/mbtcpWrite"
       responses:

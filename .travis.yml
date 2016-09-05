@@ -1,0 +1,31 @@
+sudo: required
+
+language: c
+
+services:
+    - docker
+env:
+    DOCKER_COMPOSE_VERSION: 1.8.0
+
+before_install:
+    - export TZ=Asia/Taipei
+    - sudo rm /usr/local/bin/docker-compose
+    - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+    - chmod +x docker-compose
+    - sudo mv docker-compose /usr/local/bin
+
+script:
+    - docker info
+    - docker-compose version
+    #- docker build --no-cache=true -t conf -f conf/Dockerfile.x86 .
+    #- docker run -it conf
+    #- docker build --no-cache=true -t test -f test/Dockerfile.x86 .
+    #- docker run -it test
+    #----------------------CI------------------------------------
+    - docker-compose -f test/docker-compose.x86 build --no-cache
+    - docker-compose -f test/docker-compose.x86 up --abort-on-container-exit
+    - cat /var/tmp/success      # test
+    #- rm -f /var/tmp/success   # drone only
+
+notifications:
+    email: false

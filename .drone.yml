@@ -1,0 +1,20 @@
+# drone.io v0.4
+# armhf
+
+build:
+    image: takawang/dind:$$arch
+    volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /var/tmp:/var/tmp # for test
+    privileged: true
+    commands:
+        - docker build --no-cache=true -t mb-web:test -f test/Dockerfile.$$arch .
+        - docker run -itd --name=mb-web-test mb-web:test
+        - sleep 30
+        - docker logs mb-web-test
+        - docker rm -f mb-web-test
+
+matrix:
+    arch:
+        - armhf
+

@@ -1,0 +1,14 @@
+FROM takawang/gozmq:x86
+MAINTAINER Taka Wang <taka@cmwang.net>
+
+ENV CONF_WEB "/etc/mb-web"
+ENV EP_BACKEND "consul.cmwang.net:8500"
+
+RUN go get -u github.com/taka-wang/mb-web && \
+    cd /go/src/github.com/taka-wang/mb-web/test && \
+    go get github.com/takawang/sugar
+
+WORKDIR /go/src/github.com/taka-wang/mb-web/conf
+
+# cmd
+CMD ./test.sh

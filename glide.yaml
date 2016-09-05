@@ -1,0 +1,19 @@
+package: .
+import:
+- package: github.com/apex/log
+  subpackages:
+  - handlers/json
+  - handlers/text
+- package: github.com/go-zoo/bone
+  version: ~1.1.0
+- package: github.com/spf13/viper
+  subpackages:
+  - remote
+- package: github.com/taka-wang/mb-web
+  subpackages:
+  - conf
+  - route
+- package: github.com/taka-wang/psmb
+- package: github.com/takawang/zmq3
+testImport:
+- package: github.com/takawang/sugar

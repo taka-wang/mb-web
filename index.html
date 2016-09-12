@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Mb-web by taka-wang</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Mb-web</h1>
+      <h2 class="project-tagline">Web service for psmb written in Golang.</h2>
+      <a href="https://github.com/taka-wang/mb-web" class="btn">View on GitHub</a>
+      <a href="https://github.com/taka-wang/mb-web/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/taka-wang/mb-web/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="mb-web" class="anchor" href="#mb-web" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>mb-web</h1>
+
+<p><a href="http://godoc.org/github.com/taka-wang/mb-web"><img src="https://godoc.org/github.com/taka-wang/mb-web?status.svg" alt="GoDoc"></a>
+<a href="https://goreportcard.com/report/github.com/taka-wang/mb-web"><img src="https://goreportcard.com/badge/github.com/taka-wang/mb-web" alt="Go Report Card"></a>
+<a href="https://hub.docker.com/r/edgepro/mb-web"><img src="https://img.shields.io/badge/docker-ready-brightgreen.svg" alt="Docker"></a></p>
+
+<p>REST web service for <a href="https://github.com/taka-wang/psmb">psmb</a> written in Golang.</p>
+
+<hr>
+
+<h2>
+<a id="continuous-integration" class="anchor" href="#continuous-integration" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Continuous Integration</h2>
+
+<p>I do continuous integration and build docker images after git push by self-hosted <a href="http://armdrone.cmwang.net">drone.io</a> server for armhf platform , <a href="http://circleci.com">circleci</a> server for x86 platform and <a href="https://hub.docker.com/r/edgepro/mb-web">dockerhub</a> service.</p>
+
+<table>
+<thead>
+<tr>
+<th>CI Server</th>
+<th>Target</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Travis</td>
+<td>x86</td>
+<td><a href="https://travis-ci.org/taka-wang/mb-web"><img src="https://travis-ci.org/taka-wang/mb-web.svg" alt="Travis"></a></td>
+</tr>
+<tr>
+<td>CircleCI</td>
+<td>x86</td>
+<td><a href="https://circleci.com/gh/taka-wang/mb-web"><img src="https://circleci.com/gh/taka-wang/mb-web.svg?style=shield" alt="Circle"></a></td>
+</tr>
+<tr>
+<td>Drone</td>
+<td>armhf</td>
+<td><a href="http://armdrone.cmwang.net/taka-wang/mb-web"><img src="http://armdrone.cmwang.net/api/badges/taka-wang/mb-web/status.svg" alt="Drone"></a></td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="environment-variables" class="anchor" href="#environment-variables" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Environment variables</h2>
+
+<blockquote>
+<p>Why environment variable? Refer to the <a href="http://12factor.net/">12 factors</a></p>
+</blockquote>
+
+<ul>
+<li>CONF_WEB: config file path</li>
+<li>EP_BACKEND: endpoint of remote service discovery server (optional)</li>
+</ul>
+
+<h2>
+<a id="design-principles" class="anchor" href="#design-principles" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Design principles</h2>
+
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Separation_of_concerns">Separation of concerns</a></li>
+<li>API-First Design</li>
+<li>Microservice Design</li>
+<li>Object-oriented Design</li>
+<li>12-Factor App Design</li>
+</ul>
+
+<h2>
+<a id="golang-package-management" class="anchor" href="#golang-package-management" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Golang package management</h2>
+
+<ul>
+<li>I adopted <a href="https://glide.sh/">glide</a> as package management system for this repository.</li>
+</ul>
+
+<h2>
+<a id="worker-pool-model" class="anchor" href="#worker-pool-model" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Worker Pool Model</h2>
+
+<h3>
+<a id="request-from-frontend" class="anchor" href="#request-from-frontend" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Request from frontend</h3>
+
+<p><img src="http://uml.cmwang.net:8000/plantuml/svg/5Sh13O0W3030LNG0QUBJRIfK848XfGrnU_LzjsRsnGAPb2Mfzd4024uNioOxRP3unagiphSAYZTk4pb2jrgWub0I2DHBU-gNuDgd--a5" alt="uml"></p>
+
+<h3>
+<a id="response-from-psmbtcp" class="anchor" href="#response-from-psmbtcp" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Response from psmbtcp</h3>
+
+<p><img src="http://uml.cmwang.net:8000/plantuml/svg/5Sh13O0W3030LNG0QUBJRIfK848XfGrnU_LzjsRsnGAPb2Mfzd4024uNioOxRP3unagiphSAYZTk4pb2jrgWub0I2DHBU-gNOEwN--a5" alt="uml"></p>
+
+<hr>
+
+<h2>
+<a id="api-document" class="anchor" href="#api-document" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>API Document</h2>
+
+<p><a href="docs/swagger.yaml">Swagger YAML</a></p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
+
+<p>MIT</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/taka-wang/mb-web">Mb-web</a> is maintained by <a href="https://github.com/taka-wang">taka-wang</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>

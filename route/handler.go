@@ -3,6 +3,7 @@ package route
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -14,24 +15,35 @@ import (
 	"github.com/taka-wang/psmb"
 )
 
+// handle404NotFound handle 404 not found
+func handle404NotFound(rw http.ResponseWriter, req *http.Request) {
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusNotFound)
+	io.WriteString(rw, `{"status": "404 NOT FOUND!"}`)
+}
+
+// handleRoot handle root
+func handleRoot(rw http.ResponseWriter, req *http.Request) {
+	rw.Header().Set("Content-Type", "application/json")
+	io.WriteString(rw, fmt.Sprintf(`{"version": "%s"}`, version))
+}
+
 // handleMbOnceRead [GET] request
 func handleMbOnceRead(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
 
-	fc, _ := strconv.Atoi(bone.GetValue(req, "fc"))
 	queries := bone.GetAllQueries(req)
 
+	// common queries
 	var (
 		ip, port  string
 		slave     uint8
 		addr, len uint16
 	)
-	//
-	// common queries
-	//
 
 	// check ip
 	if queries["ip"] == nil {
+		conf.Log.Debug("Slave IP is empty")
 		rw.WriteHeader(http.StatusBadRequest)
 		io.WriteString(rw, `{"status": "Invalid query string: ip"}`)
 		return
@@ -40,53 +52,55 @@ func handleMbOnceRead(rw http.ResponseWriter, req *http.Request) {
 
 	// check port
 	if queries["port"] == nil {
-		port = "502"
+		port = "502" // set default slave port
 	} else {
 		port = queries["port"][0]
 	}
 
 	// check slave
 	if queries["slave"] == nil {
-		slave = 1
+		slave = 1 // set default slave id
 	} else {
-		v, err := strconv.ParseUint(queries["slave"][0], 10, 8)
-		if err != nil {
+		if v, err := strconv.ParseUint(queries["slave"][0], 10, 8); err == nil {
+			slave = uint8(v)
+		} else {
 			conf.Log.WithError(err).Warn("Invalid slave value")
 			rw.WriteHeader(http.StatusBadRequest)
 			io.WriteString(rw, `{"status": "Invalid query string: slave"}`)
 			return
 		}
-		slave = uint8(v)
 	}
 
 	// check addr
 	if queries["addr"] == nil {
-		addr = 0
+		addr = 0 // set default start address
 	} else {
-		v, err := strconv.ParseUint(queries["addr"][0], 10, 16)
-		if err != nil {
+		if v, err := strconv.ParseUint(queries["addr"][0], 10, 16); err == nil {
+			addr = uint16(v)
+		} else {
 			conf.Log.WithError(err).Warn("Invalid address value")
 			rw.WriteHeader(http.StatusBadRequest)
 			io.WriteString(rw, `{"status": "Invalid query string: addr"}`)
 			return
 		}
-		addr = uint16(v)
 	}
 
 	// check len
 	if queries["len"] == nil {
-		len = 1
+		len = 1 // set default length
 	} else {
-		v, err := strconv.ParseUint(queries["len"][0], 10, 16)
-		if err != nil {
+		if v, err := strconv.ParseUint(queries["len"][0], 10, 16); err == nil {
+			len = uint16(v)
+		} else {
 			conf.Log.WithError(err).Warn("Invalid length value")
 			rw.WriteHeader(http.StatusBadRequest)
 			io.WriteString(rw, `{"status": "Invalid query string: length"}`)
 			return
 		}
-		len = uint16(v)
 	}
 
+	// get function code from path and check the boundary
+	fc, _ := strconv.Atoi(bone.GetValue(req, "fc"))
 	switch fc {
 	case 1, 2:
 		// call dispatcher
@@ -103,6 +117,7 @@ func handleMbOnceRead(rw http.ResponseWriter, req *http.Request) {
 		})
 		requestHandler(tid, psmb.CmdMbtcpOnceRead, string(js), rw)
 	case 3, 4:
+		// FC3, FC4 only query
 		var (
 			rtype      psmb.RegValueType
 			order      psmb.Endian
@@ -111,81 +126,83 @@ func handleMbOnceRead(rw http.ResponseWriter, req *http.Request) {
 
 		// check type
 		if queries["type"] == nil {
-			rtype = psmb.RegisterArray
+			rtype = psmb.RegisterArray // set default register type
 		} else {
-			v, err := strconv.Atoi(queries["type"][0])
-			if err != nil {
+			if v, err := strconv.Atoi(queries["type"][0]); err == nil {
+				if v < 1 || v > 8 {
+					v = 1 // set to valid range
+				}
+				rtype = psmb.RegValueType(v)
+			} else {
 				conf.Log.WithError(err).Warn("Invalid type value")
 				rw.WriteHeader(http.StatusBadRequest)
 				io.WriteString(rw, `{"status": "Invalid query string: type"}`)
 				return
 			}
-			if v < 1 || v > 8 {
-				v = 1 // set to valid range
-			}
-			rtype = psmb.RegValueType(v)
 		}
 
 		invalid := false
-		// switch type
+		// handle different register type
 		switch rtype {
 		case psmb.Scale:
+			// get scale ranges
 			if queries["a"] == nil {
 				invalid = true
-				goto ERROR
+				goto READ_ERROR
 			} else {
-				qa, err := strconv.ParseFloat(queries["a"][0], 64)
-				if err != nil {
+				if v, err := strconv.ParseFloat(queries["a"][0], 64); err == nil {
+					a = v
+				} else {
 					conf.Log.WithError(err).Warn("Invalid type value")
 					invalid = true
-					goto ERROR
+					goto READ_ERROR
 				}
-				a = qa
 			}
 
 			if queries["b"] == nil {
 				invalid = true
-				goto ERROR
+				goto READ_ERROR
 			} else {
-				qb, err := strconv.ParseFloat(queries["b"][0], 64)
-				if err != nil {
+				if v, err := strconv.ParseFloat(queries["b"][0], 64); err == nil {
+					b = v
+				} else {
 					conf.Log.WithError(err).Warn("Invalid type value")
 					invalid = true
-					goto ERROR
+					goto READ_ERROR
 				}
-				b = qb
 			}
 
 			if queries["c"] == nil {
 				invalid = true
-				goto ERROR
+				goto READ_ERROR
 			} else {
-				qc, err := strconv.ParseFloat(queries["c"][0], 64)
-				if err != nil {
+				if v, err := strconv.ParseFloat(queries["c"][0], 64); err == nil {
+					c = v
+				} else {
 					conf.Log.WithError(err).Warn("Invalid type value")
 					invalid = true
-					goto ERROR
+					goto READ_ERROR
 				}
-				c = qc
 			}
 
 			if queries["d"] == nil {
 				invalid = true
-				goto ERROR
+				goto READ_ERROR
 			} else {
-				qd, err := strconv.ParseFloat(queries["d"][0], 64)
-				if err != nil {
+				if v, err := strconv.ParseFloat(queries["d"][0], 64); err == nil {
+					d = v
+				} else {
 					conf.Log.WithError(err).Warn("Invalid type value")
 					invalid = true
-					goto ERROR
+					goto READ_ERROR
 				}
-				d = qd
 			}
 
-		ERROR:
+		READ_ERROR: // error label
 			if invalid {
 				rw.WriteHeader(http.StatusBadRequest)
 				io.WriteString(rw, `{"status": "Invalid query string: scale type without args"}`)
+				return
 			}
 
 			// call dispatcher
@@ -208,25 +225,22 @@ func handleMbOnceRead(rw http.ResponseWriter, req *http.Request) {
 				},
 			})
 			requestHandler(tid, psmb.CmdMbtcpOnceRead, string(js), rw)
-			return
-
 		case psmb.UInt16, psmb.Int16, psmb.UInt32, psmb.Int32, psmb.Float32:
 			// check order
 			if queries["order"] == nil {
 				order = psmb.BigEndian
 			} else {
-				v, err := strconv.Atoi(queries["order"][0])
-				if err != nil {
+				if v, err := strconv.Atoi(queries["order"][0]); err == nil {
+					if v < 1 || v > 4 {
+						v = 1 // set to valid range
+					}
+					order = psmb.Endian(v)
+				} else {
 					conf.Log.WithError(err).Warn("Invalid order value")
 					rw.WriteHeader(http.StatusBadRequest)
 					io.WriteString(rw, `{"status": "Invalid query string: order"}`)
 					return
 				}
-				if v < 1 || v > 4 {
-					v = 1 // set to valid range
-				}
-				order = psmb.Endian(v)
-
 			}
 			// call dispatcher
 			tid := time.Now().UTC().UnixNano()
@@ -259,7 +273,8 @@ func handleMbOnceRead(rw http.ResponseWriter, req *http.Request) {
 			})
 			requestHandler(tid, psmb.CmdMbtcpOnceRead, string(js), rw)
 		}
-	default:
+	default: // invalid function code
+		conf.Log.WithField("FC", fc).Debug("Invalid function code for once read")
 		rw.WriteHeader(http.StatusBadRequest)
 		io.WriteString(rw, `{"status": "bad request"}`)
 	}
@@ -277,11 +292,12 @@ func handleMbOnceWrite(rw http.ResponseWriter, req *http.Request) {
 			// partial
 			var data json.RawMessage
 			body := psmb.MbtcpWriteReq{Data: &data}
-			// stream to byte
+			// convert stream to byte
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(req.Body)
 
 			if err := json.Unmarshal(buf.Bytes(), &body); err != nil {
+				conf.Log.WithError(err).Warn("Fail to unmarshal POST body")
 				js, _ := json.Marshal(psmb.MbtcpSimpleRes{Status: err.Error()})
 				rw.WriteHeader(http.StatusUnsupportedMediaType)
 				rw.Write(js)
@@ -294,13 +310,12 @@ func handleMbOnceWrite(rw http.ResponseWriter, req *http.Request) {
 			body.FC = fc
 			js, _ := json.Marshal(body)
 			requestHandler(tid, psmb.CmdMbtcpOnceWrite, string(js), rw)
-
 		} else {
-			js, _ := json.Marshal(psmb.MbtcpSimpleRes{Status: "Invalid content type"})
 			rw.WriteHeader(http.StatusUnsupportedMediaType)
-			rw.Write(js)
+			io.WriteString(rw, `{"status": "Invalid content type"}`)
 		}
-	default:
+	default: // invalid function code
+		conf.Log.WithField("FC", fc).Debug("Invalid function code for once write")
 		rw.WriteHeader(http.StatusBadRequest)
 		io.WriteString(rw, `{"status": "bad request"}`)
 	}
@@ -324,6 +339,7 @@ func handleMbSetTimeout(rw http.ResponseWriter, req *http.Request) {
 	if strings.HasPrefix(req.Header["Content-Type"][0], "application/json") {
 		var body psmb.MbtcpTimeoutReq
 		if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
+			conf.Log.WithError(err).Warn("Fail to unmarshal POST body")
 			js, _ := json.Marshal(psmb.MbtcpSimpleRes{Status: err.Error()})
 			rw.WriteHeader(http.StatusUnsupportedMediaType)
 			rw.Write(js)
@@ -332,9 +348,8 @@ func handleMbSetTimeout(rw http.ResponseWriter, req *http.Request) {
 
 		// check timeout
 		if body.Data < minConnTimeout {
-			js, _ := json.Marshal(psmb.MbtcpSimpleRes{Status: "Bad request"})
 			rw.WriteHeader(http.StatusBadRequest)
-			rw.Write(js)
+			io.WriteString(rw, `{"status": "bad request"}`)
 			return
 		}
 
@@ -345,9 +360,8 @@ func handleMbSetTimeout(rw http.ResponseWriter, req *http.Request) {
 		js, _ := json.Marshal(body)
 		requestHandler(tid, psmb.CmdMbtcpSetTimeout, string(js), rw)
 	} else {
-		js, _ := json.Marshal(psmb.MbtcpSimpleRes{Status: "Invalid content type"})
 		rw.WriteHeader(http.StatusUnsupportedMediaType)
-		rw.Write(js)
+		io.WriteString(rw, `{"status": "Invalid content type"}`)
 	}
 }
 

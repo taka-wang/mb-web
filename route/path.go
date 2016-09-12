@@ -1,9 +1,6 @@
 package route
 
-//
 // route path
-//
-
 const (
 	pmbOnceRead       = "/mb/tcp/fc/:fc"
 	pmbOnceWrite      = "/mb/tcp/fc/:fc"

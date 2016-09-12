@@ -13,6 +13,8 @@ min_poll_interval       = 1             # minimal poll interval in second
 
 
 [route]
+version                 = "0.0.5"
+iam                     = "web"
 prefix                  = "/api/"
 ip                      = ""
 port                    = "8080"
@@ -23,4 +25,4 @@ sub                     = "ipc:///tmp/from.psmb"
 max_worker              = 10            # max # worker pool
 max_queue               = 500           # max # task queue
 
-# TOML config end @20160905
+# TOML config end @20160913

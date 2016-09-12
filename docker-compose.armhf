@@ -1,0 +1,40 @@
+redis:
+    image: takawang/redis:armhf
+    ports:
+        - "6379"
+
+mongodb:
+    image: takawang/mongo:armhf
+    ports:
+        - "27017"
+slave:
+    image: edgepro/c-modbus-slave:armhf
+    ports:
+        - "502:502"
+        - "503:503"
+
+modbusd:
+    image: edgepro/modbusd:armhf
+    volumes:
+        - /tmp:/tmp
+    links:
+        - slave
+
+psmbtcpsrv:
+    image: edgepro/psmb-srv:armhf
+    volumes_from:
+        - modbusd
+    links:
+        - redis
+        - mongodb
+
+mbweb:
+    image: edgepro/mb-web:armhf
+    ports:
+        - "8080:8080"
+    volumes_from:
+        - modbusd
+    links:
+        - slave
+    volumes:
+        - /var/tmp:/var/tmp # mount for test

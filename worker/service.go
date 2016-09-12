@@ -15,6 +15,47 @@ import (
 	zmq "github.com/takawang/zmq3"
 )
 
+type (
+
+	// dataSource data source: http or zmq
+	dataSource int
+
+	// job
+	job struct {
+		source  dataSource
+		cmd     string
+		payload string
+	}
+
+	// worker in worker pool
+	worker struct {
+		id      int
+		service *Service
+	}
+
+	respMap struct {
+		writer http.ResponseWriter
+		done   chan bool
+	}
+
+	// Service service
+	Service struct {
+		sync.RWMutex
+		// jobChan job channel
+		jobChan chan job
+		// pub ZMQ publisher endpoints
+		pub *zmq.Socket
+		// sub ZMQ subscriber endpoints
+		sub *zmq.Socket
+		// httpMap http req map
+		httpMap map[int64]respMap
+		// isRunning running flag
+		isRunning bool
+		// isStopped stop channel
+		isStopped chan bool
+	}
+)
+
 var (
 	// pubEndpoint zmq pub endpoint
 	pubEndpoint string
@@ -44,42 +85,6 @@ func init() {
 	maxQueueSize = conf.GetInt(keyMaxQueue)
 }
 
-type (
-
-	// dataSource data source: http or zmq
-	dataSource int
-
-	// job
-	job struct {
-		source  dataSource
-		cmd     string
-		payload string
-	}
-
-	// worker in worker pool
-	worker struct {
-		id      int
-		service *Service
-	}
-
-	// Service service
-	Service struct {
-		sync.RWMutex
-		// jobChan job channel
-		jobChan chan job
-		// pub ZMQ publisher endpoints
-		pub *zmq.Socket
-		// sub ZMQ subscriber endpoints
-		sub *zmq.Socket
-		// httpMap http req map
-		httpMap map[int64]http.ResponseWriter
-		// isRunning running flag
-		isRunning bool
-		// isStopped stop channel
-		isStopped chan bool
-	}
-)
-
 // NewService create service
 func NewService() (*Service, error) {
 	sender, err := zmq.NewSocket(zmq.PUB)
@@ -99,7 +104,7 @@ func NewService() (*Service, error) {
 		pub:       sender,
 		sub:       receiver,
 		isStopped: make(chan bool),
-		httpMap:   make(map[int64]http.ResponseWriter),
+		httpMap:   make(map[int64]respMap),
 	}, nil
 }
 
@@ -150,7 +155,7 @@ func (b *Service) start() {
 							}).Debug("Recv response from psmb")
 							b.dispatch(downstream, msg[0], msg[1]) // send to worker queue
 						} else {
-							conf.Log.WithField("msg", msg).Error("Invalid message length, discard!!")
+							conf.Log.WithField("msg", msg).Error(ErrInvalidMessageLength.Error())
 						}
 					}
 					//conf.Log.Debug("waiting..")
@@ -233,12 +238,15 @@ func (w worker) process(j job) {
 
 // requestHandler generic tcp publisher for callback setting
 func (b *Service) requestHandler(ts int64, command, payload string, w http.ResponseWriter) {
-	// set http response handler to map with mutex lock
+	done := make(chan bool, 1)
 	b.Lock()
-	defer b.Unlock()
-
-	b.httpMap[ts] = w
+	// set http response handler to map with mutex lock
+	b.httpMap[ts] = respMap{w, done}
+	b.Unlock()
 	b.dispatch(upstream, command, payload) // send to worker queue
+	// note! blocking here to wait zmq response
+	// we can enhance this channel with select timeout
+	<-done // waiting
 }
 
 func (b *Service) sendRequest(command, payload string) {
@@ -263,16 +271,16 @@ func (b *Service) sendResponse(command, payload string) {
 		}
 
 		// try to retrieve writer from map
-		if writer, ok := b.httpMap[res.Tid]; !ok {
-			conf.Log.Warn("Fail to retrieve http writer from map.")
+		if item, ok := b.httpMap[res.Tid]; !ok {
+			conf.Log.Warn(ErrFailToGetFromMap.Error())
 		} else {
 			// remove http writer from map
 			delete(b.httpMap, res.Tid)
 
 			// check response status
 			var resp psmb.MbtcpReadRes
-			if res.Status != "ok" {
-				writer.WriteHeader(http.StatusBadRequest)
+			if res.Status != statusOK {
+				item.writer.WriteHeader(http.StatusBadRequest)
 				resp = psmb.MbtcpReadRes{Status: res.Status}
 			} else {
 				resp = psmb.MbtcpReadRes{
@@ -285,7 +293,8 @@ func (b *Service) sendResponse(command, payload string) {
 
 			// send response to http client
 			js, _ := json.Marshal(resp)
-			writer.Write(js)
+			item.writer.Write(js)
+			item.done <- true // unblock route handler
 		}
 	case psmb.CmdMbtcpOnceWrite:
 		// unmarshal response from psmb
@@ -296,16 +305,16 @@ func (b *Service) sendResponse(command, payload string) {
 		}
 
 		// try to retrieve writer from map
-		if writer, ok := b.httpMap[res.Tid]; !ok {
-			conf.Log.Warn("Fail to retrieve http writer from map.")
+		if item, ok := b.httpMap[res.Tid]; !ok {
+			conf.Log.Warn(ErrFailToGetFromMap.Error())
 		} else {
 			// remove http writer from map
 			delete(b.httpMap, res.Tid)
 
 			// check response status
 			var resp psmb.MbtcpSimpleRes
-			if res.Status != "ok" {
-				writer.WriteHeader(http.StatusBadRequest)
+			if res.Status != statusOK {
+				item.writer.WriteHeader(http.StatusBadRequest)
 				resp = psmb.MbtcpSimpleRes{Status: res.Status}
 			} else {
 				resp = psmb.MbtcpSimpleRes{Status: res.Status}
@@ -313,7 +322,8 @@ func (b *Service) sendResponse(command, payload string) {
 
 			// send response to http client
 			js, _ := json.Marshal(resp)
-			writer.Write(js)
+			item.writer.Write(js)
+			item.done <- true // unblock route handler
 		}
 	case psmb.CmdMbtcpSetTimeout:
 		// unmarshal response from psmb
@@ -324,16 +334,16 @@ func (b *Service) sendResponse(command, payload string) {
 		}
 
 		// try to retrieve writer from map
-		if writer, ok := b.httpMap[res.Tid]; !ok {
-			conf.Log.Warn("Fail to retrieve http writer from map.")
+		if item, ok := b.httpMap[res.Tid]; !ok {
+			conf.Log.Warn(ErrFailToGetFromMap.Error())
 		} else {
 			// remove http writer from map
 			delete(b.httpMap, res.Tid)
 
 			// check response status
 			var resp psmb.MbtcpSimpleRes
-			if res.Status != "ok" {
-				writer.WriteHeader(http.StatusBadRequest)
+			if res.Status != statusOK {
+				item.writer.WriteHeader(http.StatusBadRequest)
 				resp = psmb.MbtcpSimpleRes{Status: res.Status}
 			} else {
 				resp = psmb.MbtcpSimpleRes{Status: res.Status}
@@ -341,7 +351,8 @@ func (b *Service) sendResponse(command, payload string) {
 
 			// send response to http client
 			js, _ := json.Marshal(resp)
-			writer.Write(js)
+			item.writer.Write(js)
+			item.done <- true // unblock route handler
 		}
 	case psmb.CmdMbtcpGetTimeout:
 		// unmarshal response from psmb
@@ -352,16 +363,16 @@ func (b *Service) sendResponse(command, payload string) {
 		}
 
 		// try to retrieve writer from map
-		if writer, ok := b.httpMap[res.Tid]; !ok {
-			conf.Log.Warn("Fail to retrieve http writer from map.")
+		if item, ok := b.httpMap[res.Tid]; !ok {
+			conf.Log.Warn(ErrFailToGetFromMap.Error())
 		} else {
 			// remove http writer from map
 			delete(b.httpMap, res.Tid)
 
 			// check response status
 			var resp psmb.MbtcpTimeoutRes
-			if res.Status != "ok" {
-				writer.WriteHeader(http.StatusBadRequest)
+			if res.Status != statusOK {
+				item.writer.WriteHeader(http.StatusBadRequest)
 				resp = psmb.MbtcpTimeoutRes{Status: res.Status}
 			} else {
 				resp = psmb.MbtcpTimeoutRes{Status: res.Status, Data: res.Data}
@@ -369,7 +380,8 @@ func (b *Service) sendResponse(command, payload string) {
 
 			// send response to http client
 			js, _ := json.Marshal(resp)
-			writer.Write(js)
+			item.writer.Write(js)
+			item.done <- true // unblock route handler
 		}
 	default:
 		conf.Log.Warn(ErrResponseNotSupport.Error())

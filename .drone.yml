@@ -8,11 +8,13 @@ build:
         - /var/tmp:/var/tmp # for test
     privileged: true
     commands:
-        - docker build --no-cache=true -t mb-web:test -f test/Dockerfile.$$arch .
-        - docker run -itd --name=mb-web-test mb-web:test
-        - sleep 30
-        - docker logs mb-web-test
-        - docker rm -f mb-web-test
+        #- docker build --no-cache=true -t mb-web:test -f test/Dockerfile.$$arch .
+        #- docker run -itd --name=mb-web-test mb-web:test
+        #- sleep 30
+        #- docker logs mb-web-test
+        #- docker rm -f mb-web-test
+        - docker build -t edgepro/mb-web:$$arch --no-cache=true -f Dockerfile.$$arch .
+        - docker push edgepro/mb-web:$$arch
 
 matrix:
     arch:

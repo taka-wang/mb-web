@@ -11,7 +11,26 @@ import (
 	"github.com/taka-wang/mb-web/conf"
 )
 
+type (
+	// RequestHandler request handler type
+	RequestHandler func(int64, string, string, http.ResponseWriter)
+
+	// Service web server
+	Service struct {
+		// mux mux instance
+		mux *bone.Mux
+		// ip web ip
+		ip string
+		// port web port
+		port string
+	}
+)
+
 var (
+	// version version string
+	version string
+	// iam who am I for zmq
+	iam string
 	// defaultMbPort default modbus slave port number
 	defaultMbPort string
 	// minConnTimeout minimal modbus tcp connection timeout
@@ -30,6 +49,8 @@ func setDefaults() {
 	conf.SetDefault(keyPollInterval, defaultPollInterval)
 
 	// set default web values
+	conf.SetDefault(keyWebVersion, defaultWebVersion)
+	conf.SetDefault(keyWebIAM, defaultWebIAM)
 	conf.SetDefault(keyWebPrefix, defaultWebPrefix)
 	conf.SetDefault(keyWebIP, defaultWebIP)
 	conf.SetDefault(keyWebPort, defaultWebPort)
@@ -37,11 +58,12 @@ func setDefaults() {
 
 func init() {
 	setDefaults()
-
 	// set null handler
 	requestHandler = func(int64, string, string, http.ResponseWriter) {}
 
-	// get mbtcp default
+	// get defaults
+	version = conf.GetString(keyWebVersion)
+	iam = conf.GetString(keyWebIAM)
 	defaultMbPort = conf.GetString(keyTCPDefaultPort)
 	minConnTimeout = conf.GetInt64(keyMinConnectionTimout)
 	minPollInterval = uint64(conf.GetInt(keyPollInterval))
@@ -56,13 +78,17 @@ func NewService() Service {
 	}
 }
 
-// getMux get mux instance
+// getMux get HTTP Multiplexer instance
 func (s *Service) getMux() *bone.Mux {
 	return s.mux
 }
 
 // start start http server
 func (s *Service) start() {
+	conf.Log.WithFields(conf.Fields{
+		"IP":   s.ip,
+		"Port": s.port,
+	}).Debug("Server is listening..")
 	http.ListenAndServe(s.ip+":"+s.port, s.mux)
 }
 
@@ -71,16 +97,11 @@ func (s *Service) setRoute() {
 
 	// Set prefix
 	s.mux.Prefix(conf.GetString(keyWebPrefix))
-	// ==================== general handlers ====================
-	// 404 Not Found
-	s.mux.NotFoundFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Write([]byte("404 NOT FOUND!"))
-	})
 
-	// ROOT
-	s.mux.Handle("/", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Write([]byte("version: " + version))
-	}))
+	// ==================== general handlers ====================
+
+	s.mux.NotFoundFunc(handle404NotFound)           // 404 Not Found
+	s.mux.Handle("/", http.HandlerFunc(handleRoot)) // ROOT (.../api/)
 
 	// ==================== one-off command ====================
 	s.mux.Get(pmbOnceRead, http.HandlerFunc(handleMbOnceRead))

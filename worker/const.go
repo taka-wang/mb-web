@@ -9,11 +9,11 @@ const (
 
 // [worker]
 const (
-	keyWebPub    = "worker.pub"
-	keyWebSub    = "worker.sub"
-	keyMaxWorker = "worker.max_worker"
-	keyMaxQueue  = "worker.max_queue"
-
+	statusOK         = "ok"
+	keyWebPub        = "worker.pub"
+	keyWebSub        = "worker.sub"
+	keyMaxWorker     = "worker.max_worker"
+	keyMaxQueue      = "worker.max_queue"
 	defaultWebPub    = "ipc:///tmp/to.psmb"
 	defaultWebSub    = "ipc:///tmp/from.psmb"
 	defaultMaxWorker = 6

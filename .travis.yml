@@ -21,6 +21,12 @@ script:
     #- docker run -it conf
     #- docker build --no-cache=true -t test -f test/Dockerfile.x86 .
     #- docker run -it test
+    - docker build --no-cache=true -t edgepro/mb-web:x86 -f Dockerfile.x86 .
+    #- docker-compose -f docker-compose.x86 build --no-cache
+    - docker-compose -f docker-compose.x86 up -d
+    - sleep 20
+    - ./test.sh
+    - docker-compose -f docker-compose.x86 stop
     #----------------------CI------------------------------------
     - docker-compose -f test/docker-compose.x86 build --no-cache
     - docker-compose -f test/docker-compose.x86 up --abort-on-container-exit

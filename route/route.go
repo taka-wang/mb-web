@@ -14,8 +14,8 @@ func GetMux() *bone.Mux {
 }
 
 // SetRequestHandler set request handler from external
-func SetRequestHandler(f RequestHandler) {
-	requestHandler = f
+func SetRequestHandler(handle RequestHandler) {
+	requestHandler = handle
 }
 
 // Start start http server

@@ -17,4 +17,7 @@ var (
 
 	// ErrInvalidMessageLength is the error when the length of message is invalid.
 	ErrInvalidMessageLength = errors.New("Invalid message length!")
+
+	// ErrFailToGetFromMap is the error when retrieving item failed.
+	ErrFailToGetFromMap = errors.New("Fail to retrieve item from map.")
 )

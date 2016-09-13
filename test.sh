@@ -1,5 +1,12 @@
 #!/bin/bash
 
+#################################################
+# REST API Tester
+#
+# Author: Taka Wang
+# Date: 2016/09/13
+#################################################
+
 ## Varaibles
 URL=http://localhost:8080/api/mb/tcp
 SLAVE=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mbweb_slave_1)

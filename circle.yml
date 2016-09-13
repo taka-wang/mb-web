@@ -1,11 +1,18 @@
 machine:
     #timezone:
     #    Asia/Taipei
+    node:
+        # Circle will use node v4.0.0
+        version: 4.0.0
     services:
         - docker
 
 dependencies:
+    cache_directories:
+        - /opt/circleci/nodejs/v4.0.0/bin
+        - /opt/circleci/nodejs/v4.0.0/lib/node_modules
     override:
+        - npm install -g newman
         - sudo apt-get install python-dev && sudo pip install --upgrade docker-compose==1.8.0
 
 test:
@@ -23,6 +30,10 @@ test:
         #- docker-compose -f docker-compose.x86 build --no-cache
         - docker-compose -f docker-compose.x86 up -d
         - sleep 20
+        #----------------------POSTMAN TEST------------------------------------
+        - ./genenv.sh # get slave ip from docker container
+        - newman run https://www.getpostman.com/collections/46b8d8a5a4d5bce2fbc7 -e /tmp/postman-env.json --reporters cli,junit --reporter-junit-export $CIRCLE_TEST_REPORTS/junit/postman.xml
+        #----------------------SHELL TEST------------------------------------
         - ./test.sh
         - docker-compose -f docker-compose.x86 stop
         #----------------------CI------------------------------------

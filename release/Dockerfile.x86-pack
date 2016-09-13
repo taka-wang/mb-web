@@ -7,7 +7,7 @@ ENV EP_BACKEND "consul.cmwang.net:8500"
 ENV ZMQ_VERSION 3.2.5
 
 # add binary
-ADD web /
+ADD web /usr/bin/
 ADD config.toml ${CONF_WEB}/
 
 RUN apk update \
@@ -36,6 +36,6 @@ RUN apk update \
 RUN apk update \
     && apk add libgcc libstdc++
 
-ENTRYPOINT /web
-
 EXPOSE 8080
+
+CMD /usr/bin/web

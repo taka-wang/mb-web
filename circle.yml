@@ -38,8 +38,7 @@ test:
         - cp config.toml release/
         # build release image
         - docker build -t edgepro/mb-web:x86 --no-cache=true -f release/Dockerfile.x86-pack release/.
-
-        #- docker build --no-cache=true -t edgepro/mb-web:x86 -f Dockerfile.x86 .
+        #---------------------- SETUP TEST -------------------------------------
         - docker-compose -f docker-compose.x86 up -d
         - sleep 20
         #---------------------- POSTMAN TEST -----------------------------------

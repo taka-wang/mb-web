@@ -4,14 +4,13 @@ MAINTAINER Taka Wang <taka@cmwang.net>
 
 ENV CONF_WEB "/etc/mb-web"
 ENV EP_BACKEND "consul.cmwang.net:8500"
-ENV ZMQ_VERSION 3.2.5
 
 # add binary
 ADD libzmq.so.3.0.0 /usr/lib/
 ADD libzmq.so.3 /usr/lib/
-ADD web /
+ADD web /usr/bin/
 ADD config.toml ${CONF_WEB}/
 
-ENTRYPOINT /web
-
 EXPOSE 8080
+
+CMD /usr/bin/web

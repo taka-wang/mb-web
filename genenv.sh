@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#################################################
-# Get slave ip from docker container for newman
+########################################################
+# Get slave ip from docker container for newman testing
 #
 # Author: Taka Wang
 # Date: 2016/09/13
-#################################################
+########################################################
 
 SLAVE=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mbweb_slave_1)
 

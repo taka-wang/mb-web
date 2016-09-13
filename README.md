@@ -28,21 +28,23 @@ I do continuous integration and build docker images after git push by self-hoste
 
 ## Design principles
 
-- [Separation of concerns](https://en.wikipedia.org/wiki/Separation_of_concerns)
+- [Separation of concerns](https://en.wikipedia.org/wiki/Separation_of_concerns) - I separate config, route and worker functions to respective packages, link route and worker services by predefined function signature and go channel.
 - [API-First Design](http://www.api-first.com/)
 - [Microservice Design](https://en.wikipedia.org/wiki/Microservices)
 - [Object-oriented Design](https://en.wikipedia.org/wiki/Object-oriented_design)
-- [12-Factor App Design]((http://12factor.net/))
+- [12-Factor App Design](http://12factor.net/)
 
 ## REST API Testing
 
-I implement **three** kinds of API testing.
+I implement **three** kinds of REST API testing.
 
 - [Go testing](test/client_test.go)
-- [Shell script](test.sh)
-- [postman/newman tester](circle.yml)
+- [Shell script tester](image/shell.gif)    
+- [Postman/Newman tester](image/newman.gif)
 
-## Golang package management
+![gif](image/newman.gif)
+
+## Golang Package Management
 
 - I adopted [glide](https://glide.sh/) as package management system for this repository.
 

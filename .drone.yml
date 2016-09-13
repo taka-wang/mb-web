@@ -13,7 +13,19 @@ build:
         #- sleep 30
         #- docker logs mb-web-test
         #- docker rm -f mb-web-test
-        - docker build -t edgepro/mb-web:$$arch --no-cache=true -f Dockerfile.$$arch .
+        #---------------------- PACKING -----------------------------------
+        # build cache
+        - docker build -t cache:$$arch -f release/Dockerfile.$$arch-cache .
+        # build builder
+        - docker build -t builder:$$arch --no-cache=true -f release/Dockerfile.$$arch-build .
+        - docker run -itd --name=builder builder:$$arch
+        # copy binary to release folder
+        - docker cp builder:/usr/lib/libzmq.so.3 release/
+        - docker cp builder:/usr/lib/libzmq.so.3.0.0 release/
+        - docker cp builder:/web release/
+        - cp config.toml release/
+        # build release image
+        - docker build -t edgepro/mb-web:$$arch --no-cache=true -f release/Dockerfile.$$arch-pack release/.
         - docker push edgepro/mb-web:$$arch
 
 matrix:

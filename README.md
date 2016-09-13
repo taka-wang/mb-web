@@ -29,10 +29,18 @@ I do continuous integration and build docker images after git push by self-hoste
 ## Design principles
 
 - [Separation of concerns](https://en.wikipedia.org/wiki/Separation_of_concerns)
-- API-First Design
-- Microservice Design
-- Object-oriented Design
-- 12-Factor App Design
+- [API-First Design](http://www.api-first.com/)
+- [Microservice Design](https://en.wikipedia.org/wiki/Microservices)
+- [Object-oriented Design](https://en.wikipedia.org/wiki/Object-oriented_design)
+- [12-Factor App Design]((http://12factor.net/))
+
+## REST API Testing
+
+I implement **three** kinds of API testing.
+
+- [Go testing](test/client_test.go)
+- [Shell script](test.sh)
+- [postman/newman tester](circle.yml)
 
 ## Golang package management
 

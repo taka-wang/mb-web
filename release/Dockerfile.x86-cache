@@ -1,0 +1,23 @@
+# x86
+FROM golang:1.7-alpine
+MAINTAINER Taka Wang <taka@cmwang.net>
+ENV ZMQ_VERSION 3.2.5
+
+RUN apk update \
+    && apk add \
+           git autoconf cmake build-base tar libtool zlib musl-dev openssl-dev zlib-dev curl \
+    
+    && echo " ... install ZMQ" \
+         && curl -L http://download.zeromq.org/zeromq-${ZMQ_VERSION}.tar.gz -o /tmp/zeromq.tar.gz \
+         && cd /tmp/ \
+         && tar -xf /tmp/zeromq.tar.gz \
+         && cd /tmp/zeromq*/ \
+         && ./configure --prefix=/usr \
+                        --sysconfdir=/etc \
+                        --mandir=/usr/share/man \
+                        --infodir=/usr/share/info \
+         && make && make install 
+    
+RUN echo " ... add glide" \
+        && go get github.com/Masterminds/glide \
+        && cd $GOPATH/src/github.com/Masterminds/glide && make install

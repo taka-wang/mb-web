@@ -1,0 +1,12 @@
+# x86
+FROM golang:x86-cache
+MAINTAINER Taka Wang <taka@cmwang.net>
+
+RUN echo " ... build" \
+        && git clone https://github.com/taka-wang/mb-web.git $GOPATH/src/github.com/taka-wang/mb-web \
+        && cd $GOPATH/src/github.com/taka-wang/mb-web \
+        && glide up \
+        && go build -o web \
+        && cp web /
+
+CMD /web

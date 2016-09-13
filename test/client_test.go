@@ -563,12 +563,11 @@ func TestOneOffWriteFC6(t *testing.T) {
 	s.Assert("`mbtcp.once.write FC6` write `HEX` register test: port 502 - miss port (ABCD) - (6/8)", func(logf sugar.Log) bool {
 		var jsonStr = []byte(fmt.Sprintf(`{
 				"ip": "%s",
-				"port": "%s",
 				"slave": 1,
 				"addr": 10,
 				"hex": true,
 				"data": "ABCD"
-			}`, hostName, portNum1))
+			}`, hostName))
 
 		req, _ := http.NewRequest("POST", "/api/mb/tcp/fc/6", bytes.NewBuffer(jsonStr))
 		req.Header.Set("Content-Type", "application/json")

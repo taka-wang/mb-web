@@ -1,0 +1,23 @@
+{
+  "name": "docker",
+  "values": [
+    {
+      "key": "slave",
+      "value": "slave",
+      "type": "text",
+      "enabled": true
+    },
+    {
+      "key": "web",
+      "value": "127.0.0.1",
+      "type": "text",
+      "enabled": true
+    },
+    {
+      "key": "port",
+      "value": "8080",
+      "type": "text",
+      "enabled": true
+    }
+  ]
+}

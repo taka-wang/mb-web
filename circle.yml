@@ -42,8 +42,8 @@ test:
         - docker-compose -f docker-compose.x86 up -d
         - sleep 20
         #---------------------- POSTMAN TEST -----------------------------------
-        - ./genenv.sh # get slave ip from docker container
-        - newman run https://www.getpostman.com/collections/46b8d8a5a4d5bce2fbc7 -e /tmp/postman-env.json --reporters cli,junit --reporter-junit-export $CIRCLE_TEST_REPORTS/junit/postman.xml
+        #- ./genenv.sh # get slave ip from docker container
+        - newman run https://www.getpostman.com/collections/6e14dc5fa1eb1aece84d -e newman-env.json --reporters cli,junit --reporter-junit-export $CIRCLE_TEST_REPORTS/junit/postman.xml
         
         #---------------------- SHELL TEST -------------------------------------
         - ./test.sh

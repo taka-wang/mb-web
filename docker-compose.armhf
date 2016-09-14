@@ -35,6 +35,14 @@ mbweb:
     volumes_from:
         - modbusd
     links:
-        - slave
+        - slave:slave
     volumes:
         - /var/tmp:/var/tmp # mount for test
+
+nodered:
+    image: nodered/node-red-docker:rpi
+    ports:
+        - "1880:1880"
+    links:
+        - mbweb:web
+        - slave:slave

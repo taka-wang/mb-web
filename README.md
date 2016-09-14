@@ -1,8 +1,8 @@
 # mb-web
 
+[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](https://hub.docker.com/r/edgepro/mb-web)
 [![GoDoc](https://godoc.org/github.com/taka-wang/mb-web?status.svg)](http://godoc.org/github.com/taka-wang/mb-web)
 [![Go Report Card](https://goreportcard.com/badge/github.com/taka-wang/mb-web)](https://goreportcard.com/report/github.com/taka-wang/mb-web)
-[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](https://hub.docker.com/r/edgepro/mb-web)
 
 REST web service for [psmb](https://github.com/taka-wang/psmb) written in Golang.
 

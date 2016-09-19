@@ -65,11 +65,14 @@ var (
 	maxQueueSize int
 	// maxWorkers the number of workers to start
 	maxWorkers int
+	// timeout zmq timeout in ms
+	zmqTimeout time.Duration
 )
 
 func setDefaults() {
 	conf.SetDefault(keyWebPub, defaultWebPub)
 	conf.SetDefault(keyWebSub, defaultWebSub)
+	conf.SetDefault(keyResTimeout, defaultResTimeout)
 	conf.SetDefault(keyMaxWorker, defaultMaxWorker)
 	conf.SetDefault(keyMaxQueue, defaultMaxQueue)
 }
@@ -83,6 +86,7 @@ func init() {
 	subEndpoint = conf.GetString(keyWebSub)
 	maxWorkers = conf.GetInt(keyMaxWorker)
 	maxQueueSize = conf.GetInt(keyMaxQueue)
+	zmqTimeout = conf.GetDuration(keyResTimeout)
 }
 
 // NewService create service
@@ -244,9 +248,18 @@ func (b *Service) requestHandler(ts int64, command, payload string, w http.Respo
 	b.httpMap[ts] = respMap{w, done}
 	b.Unlock()
 	b.dispatch(upstream, command, payload) // send to worker queue
+
 	// note! blocking here to wait zmq response
 	// we can enhance this channel with select timeout
-	<-done // waiting
+	select {
+	case <-done: // waiting:
+		return
+	case <-time.After(time.Millisecond * zmqTimeout):
+		conf.Log.WithFields(conf.Fields{
+			"cmd":     command,
+			"payload": payload,
+		}).Debug("Request handler timeout")
+	}
 }
 
 func (b *Service) sendRequest(command, payload string) {

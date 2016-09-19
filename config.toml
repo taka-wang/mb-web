@@ -11,18 +11,19 @@ default_port            = "502"         # modbus slave default port
 min_connection_timeout  = 200000        # minimal tcp connection timeout in ms
 min_poll_interval       = 1             # minimal poll interval in second
 
-
 [route]
 version                 = "0.0.5"
-iam                     = "web"
-prefix                  = "/api/"
-ip                      = ""
-port                    = "8080"
+iam                     = "web"         # service name for zmq sender field
+prefix                  = "/api/"       # restful api prefix
+ip                      = ""            # listen ip
+port                    = "8080"        # listen port
 
 [worker]
-pub                     = "ipc:///tmp/to.psmb"
-sub                     = "ipc:///tmp/from.psmb"
-max_worker              = 10            # max # worker pool
-max_queue               = 500           # max # task queue
 
-# TOML config end @20160913
+pub                     = "ipc:///tmp/to.psmb"      # publish endpoint
+sub                     = "ipc:///tmp/from.psmb"    # subscribe endpoint
+timeout                 = 1000          # http response timeout in ms for zmq request
+max_worker              = 10            # max number of worker pool
+max_queue               = 500           # max number of task queue
+
+# TOML config end @20160920

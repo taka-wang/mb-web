@@ -103,13 +103,15 @@ func (s *Service) setRoute() {
 	s.mux.NotFoundFunc(handle404NotFound)           // 404 Not Found
 	s.mux.Handle("/", http.HandlerFunc(handleRoot)) // ROOT (.../api/)
 
-	// ==================== one-off command ====================
+	// ==================== one-off command =====================
+
 	s.mux.Get(pmbOnceRead, http.HandlerFunc(handleMbOnceRead))
 	s.mux.Post(pmbOnceWrite, http.HandlerFunc(handleMbOnceWrite))
 	s.mux.Get(pmbGetTimeout, http.HandlerFunc(handleMbGetTimeout))
 	s.mux.Post(pmbSetTimeout, http.HandlerFunc(handleMbSetTimeout))
 
-	// ==================== poll command ====================
+	// ==================== poll command =======================
+
 	s.mux.Get(pmbGetPoll, http.HandlerFunc(handleMbGetPoll))
 	s.mux.Post(pmbCreatePoll, http.HandlerFunc(handleMbCreatePoll))
 	s.mux.Put(pmbUpdatePoll, http.HandlerFunc(handleMbUpdatePoll))
@@ -122,7 +124,8 @@ func (s *Service) setRoute() {
 	s.mux.Get(pmbExportPolls, http.HandlerFunc(handleMbExportPolls))
 	s.mux.Post(pmbImportPolls, http.HandlerFunc(handleMbImportPolls))
 
-	// ==================== filter command ====================
+	// ==================== filter command =====================
+
 	s.mux.Get(pmbGetFilter, http.HandlerFunc(handleMbGetFilter))
 	s.mux.Post(pmbCreateFilter, http.HandlerFunc(handleMbCreateFilter))
 	s.mux.Put(pmbUpdateFilter, http.HandlerFunc(handleMbUpdateFilter))

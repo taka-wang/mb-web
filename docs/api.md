@@ -1,43 +1,44 @@
-# REST API 
+# REST API
 
-# Table of contents
+## Table of contents
 
 <!-- TOC depthFrom:2 depthTo:6 insertAnchor:false orderedList:false updateOnSave:true withLinks:true -->
 
+- [Table of contents](#table-of-contents)
 - [1. One-off requests](#1-one-off-requests)
-	- [1.1 Read coil/register (**mbtcp.once.read**)](#11-read-coilregister-mbtcponceread)
-	- [1.2 Write coil/register (**mbtcp.once.write**)](#12-write-coilregister-mbtcponcewrite)
-	- [1.3 Get TCP connection timeout (**mbtcp.timeout.read**)](#13-get-tcp-connection-timeout-mbtcptimeoutread)
-	- [1.4 Set TCP connection timeout (**mbtcp.timeout.update**)](#14-set-tcp-connection-timeout-mbtcptimeoutupdate)
+    - [1.1 Read coil/register (**mbtcp.once.read**)](#11-read-coilregister-mbtcponceread)
+    - [1.2 Write coil/register (**mbtcp.once.write**)](#12-write-coilregister-mbtcponcewrite)
+    - [1.3 Get TCP connection timeout (**mbtcp.timeout.read**)](#13-get-tcp-connection-timeout-mbtcptimeoutread)
+    - [1.4 Set TCP connection timeout (**mbtcp.timeout.update**)](#14-set-tcp-connection-timeout-mbtcptimeoutupdate)
 - [2. Polling requests](#2-polling-requests)
-	- [2.1 Add poll request (**mbtcp.poll.create**)](#21-add-poll-request-mbtcppollcreate)
-	- [2.2 Update poll request interval (**mbtcp.poll.update**)](#22-update-poll-request-interval-mbtcppollupdate)
-	- [2.3 Read poll request status (**mbtcp.poll.read**)](#23-read-poll-request-status-mbtcppollread)
-	- [2.4 Delete poll request (**mbtcp.poll.delete**)](#24-delete-poll-request-mbtcppolldelete)
-	- [2.5 Enable/Disable poll request (**mbtcp.poll.toggle**)](#25-enabledisable-poll-request-mbtcppolltoggle)
-	- [2.6 Read all poll requests status (**mbtcp.polls.read**)](#26-read-all-poll-requests-status-mbtcppollsread)
-	- [2.7 Delete all poll requests (**mbtcp.polls.delete**)](#27-delete-all-poll-requests-mbtcppollsdelete)
-	- [2.8 Enable/Disable all poll requests (**mbtcp.polls.toggle**)](#28-enabledisable-all-poll-requests-mbtcppollstoggle)
-	- [2.9 Import poll requests (**mbtcp.polls.import**)](#29-import-poll-requests-mbtcppollsimport)
-	- [2.10 Export poll requests (**mbtcp.polls.export**)](#210-export-poll-requests-mbtcppollsexport)
-	- [2.11 Read history (**mbtcp.poll.history**)](#211-read-history-mbtcppollhistory)
+    - [2.1 Add poll request (**mbtcp.poll.create**)](#21-add-poll-request-mbtcppollcreate)
+    - [2.2 Update poll request interval (**mbtcp.poll.update**)](#22-update-poll-request-interval-mbtcppollupdate)
+    - [2.3 Read poll request status (**mbtcp.poll.read**)](#23-read-poll-request-status-mbtcppollread)
+    - [2.4 Delete poll request (**mbtcp.poll.delete**)](#24-delete-poll-request-mbtcppolldelete)
+    - [2.5 Enable/Disable poll request (**mbtcp.poll.toggle**)](#25-enabledisable-poll-request-mbtcppolltoggle)
+    - [2.6 Read all poll requests status (**mbtcp.polls.read**)](#26-read-all-poll-requests-status-mbtcppollsread)
+    - [2.7 Delete all poll requests (**mbtcp.polls.delete**)](#27-delete-all-poll-requests-mbtcppollsdelete)
+    - [2.8 Enable/Disable all poll requests (**mbtcp.polls.toggle**)](#28-enabledisable-all-poll-requests-mbtcppollstoggle)
+    - [2.9 Import poll requests (**mbtcp.polls.import**)](#29-import-poll-requests-mbtcppollsimport)
+    - [2.10 Export poll requests (**mbtcp.polls.export**)](#210-export-poll-requests-mbtcppollsexport)
+    - [2.11 Read history (**mbtcp.poll.history**)](#211-read-history-mbtcppollhistory)
 - [3. Filter requests](#3-filter-requests)
-	- [3.1 Add filter request (**mbtcp.filter.create**)](#31-add-filter-request-mbtcpfiltercreate)
-	- [3.2 Update filter request (**mbtcp.filter.update**)](#32-update-filter-request-mbtcpfilterupdate)
-	- [3.3 Read filter request status (**mbtcp.filter.read**)](#33-read-filter-request-status-mbtcpfilterread)
-	- [3.4 Delete filter request (**mbtcp.filter.delete**)](#34-delete-filter-request-mbtcpfilterdelete)
-	- [3.5 Enable/Disable filter request (**mbtcp.filter.toggle**)](#35-enabledisable-filter-request-mbtcpfiltertoggle)
-	- [3.6 Read all filter requests (**mbtcp.filters.read**)](#36-read-all-filter-requests-mbtcpfiltersread)
-	- [3.7 Delete all filter requests (**mbtcp.filters.delete**)](#37-delete-all-filter-requests-mbtcpfiltersdelete)
-	- [3.8 Enable/Disable all filter requests (**mbtcp.filters.toggle**)](#38-enabledisable-all-filter-requests-mbtcpfilterstoggle)
-	- [3.9 Import filter requests (**mbtcp.filters.import**)](#39-import-filter-requests-mbtcpfiltersimport)
-	- [3.10 Export filter requests (**mbtcp.filters.export**)](#310-export-filter-requests-mbtcpfiltersexport)
+    - [3.1 Add filter request (**mbtcp.filter.create**)](#31-add-filter-request-mbtcpfiltercreate)
+    - [3.2 Update filter request (**mbtcp.filter.update**)](#32-update-filter-request-mbtcpfilterupdate)
+    - [3.3 Read filter request status (**mbtcp.filter.read**)](#33-read-filter-request-status-mbtcpfilterread)
+    - [3.4 Delete filter request (**mbtcp.filter.delete**)](#34-delete-filter-request-mbtcpfilterdelete)
+    - [3.5 Enable/Disable filter request (**mbtcp.filter.toggle**)](#35-enabledisable-filter-request-mbtcpfiltertoggle)
+    - [3.6 Read all filter requests (**mbtcp.filters.read**)](#36-read-all-filter-requests-mbtcpfiltersread)
+    - [3.7 Delete all filter requests (**mbtcp.filters.delete**)](#37-delete-all-filter-requests-mbtcpfiltersdelete)
+    - [3.8 Enable/Disable all filter requests (**mbtcp.filters.toggle**)](#38-enabledisable-all-filter-requests-mbtcpfilterstoggle)
+    - [3.9 Import filter requests (**mbtcp.filters.import**)](#39-import-filter-requests-mbtcpfiltersimport)
+    - [3.10 Export filter requests (**mbtcp.filters.export**)](#310-export-filter-requests-mbtcpfiltersexport)
 - [4. Authentication](#4-authentication)
-	- [4.1 Login](#41-login)
-	- [4.2 Logout](#42-logout)
-	- [4.3 Update username](#43-update-username)
-	- [4.4 Update password](#44-update-password)
-	- [4.5 Reset authetication setting](#45-reset-authetication-setting)
+    - [4.1 Login](#41-login)
+    - [4.2 Logout](#42-logout)
+    - [4.3 Update username](#43-update-username)
+    - [4.4 Update password](#44-update-password)
+    - [4.5 Reset authetication setting](#45-reset-authetication-setting)
 
 <!-- /TOC -->
 
@@ -59,7 +60,6 @@
 >|bytes  |response byte array    |response body |-             |[0XAB, 0X12] | see below  |fc 3, 4 and type 2~8 only                |
 >|status |response status        |response body |string        |-            |"ok"        |:heavy_check_mark:                       |
 >|data   |response value         |response body |integer array |-            |[1,0,24,1]  |if success                               |
-
 
 - Verb: **GET**
 - URI: /api/mb/tcp/fc/**{fc}**
@@ -233,7 +233,6 @@
 |data   |data to be write       |request body  |integer array |                   |[1,0,24,1]  |if success        |
 |status |response status        |response body |string        |-                  |"ok"        |:heavy_check_mark:|
 
-
 - Verb: **POST**
 - URI: /api/mb/tcp/fc/**{fc}**
 - Example: write **single** coil/register
@@ -352,11 +351,12 @@
 - Example:
 
     - **Request**
+
         - endpoint:
         ```Bash
         /api/mb/tcp/timeout
         ```
-        
+
         - body:
         ```JavaScript
         {
@@ -365,14 +365,17 @@
         ```
 
     - **Response**
-        - success:
+
+        - Success:
+
         ```JavaScript
         {
             "status": "ok"
         }
         ```
 
-        - fail:
+        - Fail:
+
         ```JavaScript
         {
             "status": "timeout"
@@ -401,12 +404,15 @@
 - Example:
 
     - **Request**
+
         - endpoint:
+
         ```Bash
         /api/mb/tcp/poll/led_1
         ```
-        
+
         - body:
+
         ```JavaScript
         {
             "fc": 1,
@@ -420,14 +426,17 @@
         ```
 
     - **Response**
-        - success:
+
+        - Success:
+
         ```JavaScript
         {
             "status": "ok"
         }
         ```
 
-        - fail:
+        - Fail:
+
         ```JavaScript
         {
             "status": "timeout"
@@ -454,8 +463,9 @@
         /api/mb/tcp/poll/led_1
 
         ```
-        
+
         - body:
+
         ```JavaScript
         {
             "interval" : 3
@@ -463,14 +473,17 @@
         ```
 
     - **Response**
-        - success:
+
+        - Success:
+
         ```JavaScript
         {
             "status": "ok"
         }
         ```
 
-        - fail:
+        - Fail:
+
         ```JavaScript
         {
             "status": "timeout"
@@ -568,7 +581,6 @@
 |**name**     |request/sensor name    |path          |string        |no space and **unique**|led_1       |:heavy_check_mark:|
 |**enabled**  |polling enabled flag   |request  body |boolean       |true, false            |true        |:heavy_check_mark:|
 |status       |response status        |response body |string        |-                      |"ok"        |:heavy_check_mark:|
-
 
 - Verb: **POST**
 - URI: /api/mb/tcp/poll/**{name}**/toggle
@@ -706,7 +718,6 @@
 |:------------|:----------------------|:-------------|:-------------|:----------|:-----------|:-----------------|
 |**enabled**  |polling enabled flag   |request  body |boolean       |true, false|true        |:heavy_check_mark:|
 |status       |response status        |response body |string        |-          |"ok"        |:heavy_check_mark:|
-
 
 - Verb: **POST**
 - URI: /api/mb/tcp/polls/toggle
@@ -900,33 +911,38 @@
 - Example:
 
     - **Request**
+
         - endpoint:
         ```Bash
         /api/mb/tcp/poll/led_1/logs
         ```
 
     - **Response**
-        - success (len=1):
+
+        - Success (len=1):
+
         ```JavaScript
         {
             "status": "ok",
             "data":[{"data": [1], "ts": 2012031203},
                     {"data": [0], "ts": 2012031205},
-                    {"data": [1], "ts": 2012031207}]        
+                    {"data": [1], "ts": 2012031207}]
         }
         ```
-        
-        - success (len=n):
+
+        - Success (len=n):
+
         ```JavaScript
         {
             "status": "ok",
             "data":[{"data": [1,0,1], "ts": 2012031203},
                     {"data": [1,1,1], "ts": 2012031205},
-                    {"data": [0,0,1], "ts": 2012031207}]        
+                    {"data": [0,0,1], "ts": 2012031207}]
         }
         ```
 
-        - fail:
+        - Fail:
+
         ```JavaScript
         {
             "status": "not exist"

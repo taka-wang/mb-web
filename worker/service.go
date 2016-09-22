@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/taka-wang/mb-web/conf"
 	"github.com/taka-wang/psmb"
+	"github.com/taka-wang/psmb/viper-conf"
 	zmq "github.com/takawang/zmq3"
 )
 

@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/go-zoo/bone"
-	"github.com/taka-wang/mb-web/conf"
 	"github.com/taka-wang/psmb"
+	"github.com/taka-wang/psmb/viper-conf"
 )
 
 // handle404NotFound handle 404 not found

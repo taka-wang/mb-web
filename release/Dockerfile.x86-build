@@ -5,8 +5,8 @@ MAINTAINER Taka Wang <taka@cmwang.net>
 RUN echo " ... build" \
         && git clone https://github.com/taka-wang/mb-web.git $GOPATH/src/github.com/taka-wang/mb-web \
         && cd $GOPATH/src/github.com/taka-wang/mb-web \
-        && glide up \
-        && go build -o web \
+        && go get github.com/go-zoo/bone github.com/takawang/zmq3 github.com/taka-wang/psmb/viper-conf \
+        && go build -o web -ldflags "-X github.com/taka-wang/psmb/viper-conf.envconf=CONF_WEB" main.go \
         && cp web /
 
 CMD /web

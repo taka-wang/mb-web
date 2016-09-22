@@ -44,10 +44,6 @@ I implement **three** kinds of REST API testing.
 
 ![gif](image/newman.gif)
 
-## Golang Package Management
-
-- I adopted [glide](https://glide.sh/) as package management system for this repository.
-
 ## Worker Pool Model
 
 ### Request from frontend

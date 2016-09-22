@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/go-zoo/bone"
-	"github.com/taka-wang/mb-web/conf"
+	"github.com/taka-wang/psmb/viper-conf"
 )
 
 type (

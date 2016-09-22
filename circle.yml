@@ -35,7 +35,6 @@ test:
         - docker run -itd --name=builder builder:x86
         # copy binary to release folder
         - docker cp builder:/web release/
-        - cp config.toml release/
         # build release image
         - docker build -t edgepro/mb-web:x86 --no-cache=true -f release/Dockerfile.x86-pack release/.
         #---------------------- SETUP TEST -------------------------------------

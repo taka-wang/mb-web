@@ -23,7 +23,6 @@ build:
         - docker cp builder:/usr/lib/libzmq.so.3 release/
         - docker cp builder:/usr/lib/libzmq.so.3.0.0 release/
         - docker cp builder:/web release/
-        - cp config.toml release/
         # build release image
         - docker build -t edgepro/mb-web:$$arch --no-cache=true -f release/Dockerfile.$$arch-pack release/.
         - docker push edgepro/mb-web:$$arch
